@@ -16,6 +16,7 @@ export class Controls {
     this.isDragging = false;
     this.prevMouse = { x: 0, y: 0 };
     this.moveSpeed = 4;
+    this.turnSpeed = 2.5;
 
     this.setup();
   }
@@ -61,26 +62,25 @@ export class Controls {
   update(dt) {
     this.distance += (this.distanceTarget - this.distance) * 0.05;
 
-    const forward = new THREE.Vector3(-Math.sin(this.theta), 0, -Math.cos(this.theta));
-    const right = new THREE.Vector3(Math.cos(this.theta), 0, -Math.sin(this.theta));
+    if (this.keys.left) {
+      this.animal.group.rotation.y += this.turnSpeed * dt;
+    }
+    if (this.keys.right) {
+      this.animal.group.rotation.y -= this.turnSpeed * dt;
+    }
 
-    const moveInput = new THREE.Vector3();
-    if (this.keys.forward) moveInput.add(forward);
-    if (this.keys.backward) moveInput.sub(forward);
-    if (this.keys.right) moveInput.add(right);
-    if (this.keys.left) moveInput.sub(right);
+    const localMove = new THREE.Vector3();
+    if (this.keys.forward) localMove.z = -1;
+    if (this.keys.backward) localMove.z = 1;
 
-    const isMoving = moveInput.length() > 0.01;
+    const isMoving = localMove.length() > 0.01;
 
     if (isMoving) {
-      moveInput.normalize();
+      const worldMove = localMove.clone().applyQuaternion(this.animal.group.quaternion);
       const pos = this.animal.group.position;
-      pos.x += moveInput.x * this.moveSpeed * dt;
-      pos.z += moveInput.z * this.moveSpeed * dt;
+      pos.x += worldMove.x * this.moveSpeed * dt;
+      pos.z += worldMove.z * this.moveSpeed * dt;
       pos.y = this.getHeight(pos.x, pos.z);
-
-      const targetDir = new THREE.Vector3().copy(pos).add(moveInput);
-      this.animal.lookAt(targetDir);
     }
 
     this.animal.update(dt, this.moveSpeed, isMoving);
