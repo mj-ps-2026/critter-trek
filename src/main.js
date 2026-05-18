@@ -4,6 +4,7 @@ import { Animal } from './animal.js';
 import { Controls } from './controls.js';
 import { Wolf } from './wolf.js';
 import { Combat } from './combat.js';
+import { FaunaManager } from './fauna.js';
 import './style.css';
 
 const EXPLORE = 0;
@@ -58,6 +59,8 @@ scene.add(rimLight);
 
 const chunkManager = new ChunkManager(scene);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
+
+const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 
 const animal = new Animal();
 animal.group.position.set(0, chunkManager.getHeight(0, 0), 0);
@@ -136,6 +139,7 @@ function animate() {
     case EXPLORE: {
       const pos = animal.group.position;
       chunkManager.update(pos);
+      fauna.update(pos, dt);
 
       sunLight.position.set(pos.x + 50, 60, pos.z + 30);
       sunLight.target.position.copy(pos);
