@@ -14,6 +14,8 @@ export class ChunkManager {
   constructor(scene) {
     this.scene = scene;
     this.loadedChunks = new Map();
+    this.chunkCache = new Map();
+    this.cacheMaxSize = 200;
     this.lastCX = null;
     this.lastCZ = null;
     this.renderDist = 3;
@@ -135,7 +137,13 @@ export class ChunkManager {
     for (const [key, chunk] of this.loadedChunks) {
       const dx = chunk.cx - cx, dz = chunk.cz - cz;
       if (Math.abs(dx) > this.renderDist || Math.abs(dz) > this.renderDist) {
-        this.#disposeChunk(chunk);
+        this.scene.remove(chunk.group);
+        this.chunkCache.set(key, chunk);
+        if (this.chunkCache.size > this.cacheMaxSize) {
+          const oldestKey = this.chunkCache.keys().next().value;
+          this.#disposeChunk(this.chunkCache.get(oldestKey));
+          this.chunkCache.delete(oldestKey);
+        }
         keysToRemove.push(key);
       }
     }
@@ -145,7 +153,13 @@ export class ChunkManager {
       for (let dz = -this.renderDist; dz <= this.renderDist; dz++) {
         const key = `${cx + dx},${cz + dz}`;
         if (!this.loadedChunks.has(key)) {
-          const chunk = new Chunk(cx + dx, cz + dz, this.getHeight, this.getBiomeInfo);
+          let chunk;
+          if (this.chunkCache.has(key)) {
+            chunk = this.chunkCache.get(key);
+            this.chunkCache.delete(key);
+          } else {
+            chunk = new Chunk(cx + dx, cz + dz, this.getHeight, this.getBiomeInfo);
+          }
           this.loadedChunks.set(key, chunk);
           this.scene.add(chunk.group);
         }
@@ -154,6 +168,13 @@ export class ChunkManager {
 
     this.water.position.x = cx * CHUNK_SIZE;
     this.water.position.z = cz * CHUNK_SIZE;
+  }
+
+  dispose() {
+    for (const chunk of this.loadedChunks.values()) this.#disposeChunk(chunk);
+    this.loadedChunks.clear();
+    for (const chunk of this.chunkCache.values()) this.#disposeChunk(chunk);
+    this.chunkCache.clear();
   }
 
   #disposeChunk(chunk) {
