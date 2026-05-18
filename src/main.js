@@ -7,14 +7,10 @@ import { Combat } from './combat.js';
 import { FaunaManager } from './fauna.js';
 import './style.css';
 
-const EXPLORE = 0;
-const COMBAT = 1;
-const GAME_OVER = 2;
-
+const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2;
 let gameState = EXPLORE;
 
 const scene = new THREE.Scene();
-
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 300);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -28,34 +24,36 @@ document.body.prepend(renderer.domElement);
 
 const sky = createSkyDome(scene);
 
-const ambientLight = new THREE.AmbientLight(0x303050, 0.4);
+const ambientLight = new THREE.AmbientLight(0x303050, 0.35);
 scene.add(ambientLight);
 
-const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x5a8d54, 0.6);
+const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a6d44, 0.5);
 scene.add(hemiLight);
 
-const sunLight = new THREE.DirectionalLight(0xFFD58E, 1.4);
+const sunLight = new THREE.DirectionalLight(0xFFD58E, 1.5);
 sunLight.position.set(50, 60, 30);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 4096;
 sunLight.shadow.mapSize.height = 4096;
 sunLight.shadow.camera.near = 0.1;
-sunLight.shadow.camera.far = 100;
-sunLight.shadow.camera.left = -25;
-sunLight.shadow.camera.right = 25;
-sunLight.shadow.camera.top = 25;
-sunLight.shadow.camera.bottom = -25;
-sunLight.shadow.bias = -0.001;
-sunLight.shadow.normalBias = 0.02;
+sunLight.shadow.camera.far = 150;
+sunLight.shadow.camera.left = -30;
+sunLight.shadow.camera.right = 30;
+sunLight.shadow.camera.top = 30;
+sunLight.shadow.camera.bottom = -30;
+sunLight.shadow.bias = -0.0005;
+sunLight.shadow.normalBias = 0.03;
 scene.add(sunLight);
 
-const fillLight = new THREE.DirectionalLight(0x6B8EC5, 0.35);
+const fillLight = new THREE.DirectionalLight(0x6B8EC5, 0.3);
 fillLight.position.set(-40, 20, -40);
 scene.add(fillLight);
 
-const rimLight = new THREE.DirectionalLight(0xFFEECC, 0.4);
+const rimLight = new THREE.DirectionalLight(0xFFEECC, 0.3);
 rimLight.position.set(-30, 10, 50);
 scene.add(rimLight);
+
+const stars = createStars(scene);
 
 const chunkManager = new ChunkManager(scene);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
@@ -77,10 +75,7 @@ const combat = new Combat(
   (wolf) => {
     gameState = EXPLORE;
     const idx = wolves.indexOf(wolf);
-    if (idx !== -1) {
-      wolf.removeFrom(scene);
-      wolves.splice(idx, 1);
-    }
+    if (idx !== -1) { wolf.removeFrom(scene); wolves.splice(idx, 1); }
   },
   () => {
     document.getElementById('game-over-overlay').style.display = 'flex';
@@ -89,8 +84,10 @@ const combat = new Combat(
 );
 
 const clock = new THREE.Clock();
-
 const infoEl = document.getElementById('info');
+
+let dayTime = Math.PI * 0.75;
+const dayLength = 120;
 
 function createSkyDome(scene) {
   const canvas = document.createElement('canvas');
@@ -113,10 +110,70 @@ function createSkyDome(scene) {
   tex.generateMipmaps = true;
 
   const geo = new THREE.SphereGeometry(200, 32, 32);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide });
+  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, color: 0xffffff });
   const sky = new THREE.Mesh(geo, mat);
   scene.add(sky);
   return sky;
+}
+
+function createStars(scene) {
+  const starCount = 4000;
+  const positions = new Float32Array(starCount * 3);
+  const sizes = new Float32Array(starCount);
+  for (let i = 0; i < starCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 180 + Math.random() * 10;
+    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.cos(phi) * 0.5;
+    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    sizes[i] = 0.3 + Math.random() * 0.7;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, sizeAttenuation: true, transparent: true, opacity: 0 });
+  const stars = new THREE.Points(geo, mat);
+  scene.add(stars);
+  return stars;
+}
+
+function updateDayNight(dt, foxPos) {
+  dayTime += dt * (Math.PI * 2 / dayLength);
+  const a = dayTime;
+
+  const sunX = Math.cos(a) * 55;
+  const sunZ = Math.sin(a) * 40;
+  const sunY = Math.sin(a) * 55 + 5;
+
+  const heightFactor = (sunY + 20) / 75;
+  const dayFactor = Math.max(0, Math.min(1, heightFactor));
+
+  sunLight.position.set(foxPos.x + sunX, sunY, foxPos.z + sunZ);
+  sunLight.target.position.copy(foxPos);
+  sunLight.target.updateMatrixWorld();
+  sunLight.shadow.camera.updateProjectionMatrix();
+
+  sunLight.intensity = Math.max(0, (dayFactor - 0.05) * 1.6);
+
+  const sunHue = dayFactor < 0.3 ? 0.08 - dayFactor * 0.1 : 0.05;
+  const sunSat = dayFactor < 0.2 ? 0.9 : 0.3 + dayFactor * 0.4;
+  const sunLum = 0.15 + dayFactor * 0.55;
+  sunLight.color.setHSL(Math.max(0, sunHue), sunSat, sunLum);
+
+  ambientLight.intensity = 0.03 + dayFactor * 0.35;
+  hemiLight.intensity = dayFactor * 0.5;
+
+  const skyHue = 0.62 - dayFactor * 0.07;
+  const skySat = 0.2 + dayFactor * 0.3;
+  const skyLum = Math.max(0.08, dayFactor * 0.55);
+  sky.material.color.setHSL(skyHue, skySat, skyLum);
+
+  scene.fog.color.setHSL(skyHue, skySat * 0.4, Math.max(0.05, skyLum * 0.7));
+
+  stars.material.opacity = Math.max(0, 1 - dayFactor * 1.4);
+
+  renderer.toneMappingExposure = 0.3 + dayFactor * 0.7;
 }
 
 function spawnWolf() {
@@ -140,32 +197,19 @@ function animate() {
       const pos = animal.group.position;
       chunkManager.update(pos);
       fauna.update(pos, dt);
-
-      sunLight.position.set(pos.x + 50, 60, pos.z + 30);
-      sunLight.target.position.copy(pos);
-      sunLight.target.updateMatrixWorld();
-      sunLight.shadow.camera.left = -25;
-      sunLight.shadow.camera.right = 25;
-      sunLight.shadow.camera.top = 25;
-      sunLight.shadow.camera.bottom = -25;
-      sunLight.shadow.camera.updateProjectionMatrix();
+      updateDayNight(dt, pos);
 
       const targetWolfCount = 4;
-      while (wolves.length < targetWolfCount) {
-        spawnWolf();
-      }
+      while (wolves.length < targetWolfCount) spawnWolf();
 
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos);
-        if (result === 'attacking') {
-          gameState = COMBAT;
-          combat.start(wolf);
-          break;
-        }
+        if (result === 'attacking') { gameState = COMBAT; combat.start(wolf); break; }
       }
       controls.update(dt);
 
       sky.position.copy(camera.position);
+      stars.position.copy(camera.position);
 
       if (controls.superMode) {
         infoEl.textContent = 'SUPER MODE — WASD to fly · Space/Shift up/down · F to toggle';
@@ -176,10 +220,8 @@ function animate() {
       }
       break;
     }
-    case COMBAT:
-      break;
-    case GAME_OVER:
-      break;
+    case COMBAT: break;
+    case GAME_OVER: break;
   }
 
   renderer.render(scene, camera);
