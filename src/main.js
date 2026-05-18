@@ -57,7 +57,7 @@ rimLight.position.set(-30, 10, 50);
 scene.add(rimLight);
 
 const chunkManager = new ChunkManager(scene);
-scene.fog = new THREE.FogExp2(0x88B8D8, 0.0025);
+scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
 const animal = new Animal();
 animal.group.position.set(0, chunkManager.getHeight(0, 0), 0);
