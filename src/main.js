@@ -53,6 +53,11 @@ const rimLight = new THREE.DirectionalLight(0xFFEECC, 0.3);
 rimLight.position.set(-30, 10, 50);
 scene.add(rimLight);
 
+const moonLight = new THREE.DirectionalLight(0x4466AA, 0);
+moonLight.position.set(-50, 40, -40);
+moonLight.target.position.set(0, 0, 0);
+scene.add(moonLight);
+
 const stars = createStars(scene);
 
 const chunkManager = new ChunkManager(scene);
@@ -86,8 +91,8 @@ const combat = new Combat(
 const clock = new THREE.Clock();
 const infoEl = document.getElementById('info');
 
-let dayTime = Math.PI * 0.75;
-const dayLength = 120;
+let dayTime = Math.PI * 0.6;
+const dayLength = 90;
 
 function createSkyDome(scene) {
   const canvas = document.createElement('canvas');
@@ -141,13 +146,22 @@ function createStars(scene) {
 function updateDayNight(dt, foxPos) {
   dayTime += dt * (Math.PI * 2 / dayLength);
   const a = dayTime;
+  const sunAngle = a;
+  const moonAngle = a + Math.PI;
 
-  const sunX = Math.cos(a) * 55;
-  const sunZ = Math.sin(a) * 40;
-  const sunY = Math.sin(a) * 55 + 5;
+  const sunX = Math.cos(sunAngle) * 55;
+  const sunZ = Math.sin(sunAngle) * 40;
+  const sunY = Math.sin(sunAngle) * 55 + 8;
 
-  const heightFactor = (sunY + 20) / 75;
+  const moonX = Math.cos(moonAngle) * 50;
+  const moonZ = Math.sin(moonAngle) * 35;
+  const moonY = Math.sin(moonAngle) * 50 + 8;
+
+  const heightFactor = (sunY + 20) / 78;
   const dayFactor = Math.max(0, Math.min(1, heightFactor));
+
+  const moonHeightFactor = (moonY + 20) / 78;
+  const moonFactor = Math.max(0, Math.min(1, moonHeightFactor));
 
   sunLight.position.set(foxPos.x + sunX, sunY, foxPos.z + sunZ);
   sunLight.target.position.copy(foxPos);
@@ -161,19 +175,24 @@ function updateDayNight(dt, foxPos) {
   const sunLum = 0.15 + dayFactor * 0.55;
   sunLight.color.setHSL(Math.max(0, sunHue), sunSat, sunLum);
 
-  ambientLight.intensity = 0.03 + dayFactor * 0.35;
+  moonLight.position.set(foxPos.x + moonX, moonY, foxPos.z + moonZ);
+  moonLight.target.position.copy(foxPos);
+  moonLight.target.updateMatrixWorld();
+  moonLight.intensity = Math.max(0, (moonFactor - 0.15) * 0.5) * (1 - dayFactor);
+
+  ambientLight.intensity = 0.03 + dayFactor * 0.35 + moonLight.intensity * 0.15;
   hemiLight.intensity = dayFactor * 0.5;
 
   const skyHue = 0.62 - dayFactor * 0.07;
   const skySat = 0.2 + dayFactor * 0.3;
-  const skyLum = Math.max(0.08, dayFactor * 0.55);
+  const skyLum = Math.max(0.06, dayFactor * 0.55);
   sky.material.color.setHSL(skyHue, skySat, skyLum);
 
-  scene.fog.color.setHSL(skyHue, skySat * 0.4, Math.max(0.05, skyLum * 0.7));
+  scene.fog.color.setHSL(skyHue, skySat * 0.4, Math.max(0.04, skyLum * 0.7));
 
   stars.material.opacity = Math.max(0, 1 - dayFactor * 1.4);
 
-  renderer.toneMappingExposure = 0.3 + dayFactor * 0.7;
+  renderer.toneMappingExposure = 0.35 + dayFactor * 0.65;
 }
 
 function spawnWolf() {
