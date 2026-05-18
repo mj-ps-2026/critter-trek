@@ -11,7 +11,7 @@ function smoothstep(t, lo, hi) {
 }
 
 export class ChunkManager {
-  constructor(scene) {
+  constructor(scene, seed = 42) {
     this.scene = scene;
     this.loadedChunks = new Map();
     this.chunkCache = new Map();
@@ -20,8 +20,8 @@ export class ChunkManager {
     this.lastCZ = null;
     this.renderDist = 3;
 
-    const n = new Noise(42);
-    const n2 = new Noise(137);
+    const n = new Noise(seed * 7 + 13);
+    const n2 = new Noise(seed * 31 + 7);
 
     this.getHeight = (x, z) => {
       const continent = n.noise2D(x * 0.0014, z * 0.0014);

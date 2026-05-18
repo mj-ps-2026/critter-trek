@@ -60,13 +60,15 @@ scene.add(moonLight);
 
 const stars = createStars(scene);
 
-const chunkManager = new ChunkManager(scene);
+const worldSeed = Math.floor(Math.random() * 100000);
+const chunkManager = new ChunkManager(scene, worldSeed);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 
 const animal = new Animal();
-animal.group.position.set(0, chunkManager.getHeight(0, 0), 0);
+const spawn = findSpawn(chunkManager.getHeight);
+animal.group.position.set(spawn.x, spawn.y, spawn.z);
 scene.add(animal.group);
 
 const controls = new Controls(camera, animal, renderer.domElement, chunkManager.getHeight);
@@ -93,6 +95,17 @@ const infoEl = document.getElementById('info');
 
 let dayTime = Math.PI * 0.6;
 const dayLength = 90;
+
+function findSpawn(getHeight) {
+  for (let i = 0; i < 100; i++) {
+    const x = (Math.random() - 0.5) * 60;
+    const z = (Math.random() - 0.5) * 60;
+    const y = getHeight(x, z);
+    if (y > 1) return { x, y, z };
+  }
+  const y = getHeight(0, 0);
+  return { x: 0, y, z: 0 };
+}
 
 function createSkyDome(scene) {
   const canvas = document.createElement('canvas');
