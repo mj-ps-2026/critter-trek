@@ -25,7 +25,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.9;
 document.body.prepend(renderer.domElement);
 
-createSkyDome(scene);
+const sky = createSkyDome(scene);
 
 const ambientLight = new THREE.AmbientLight(0x303050, 0.4);
 scene.add(ambientLight);
@@ -87,6 +87,8 @@ const combat = new Combat(
 
 const clock = new THREE.Clock();
 
+const infoEl = document.getElementById('info');
+
 function createSkyDome(scene) {
   const canvas = document.createElement('canvas');
   canvas.width = 2;
@@ -111,6 +113,7 @@ function createSkyDome(scene) {
   const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide });
   const sky = new THREE.Mesh(geo, mat);
   scene.add(sky);
+  return sky;
 }
 
 function spawnWolf() {
@@ -157,6 +160,16 @@ function animate() {
         }
       }
       controls.update(dt);
+
+      sky.position.copy(camera.position);
+
+      if (controls.superMode) {
+        infoEl.textContent = 'SUPER MODE — WASD to fly · Space/Shift up/down · F to toggle';
+        infoEl.style.background = 'rgba(200,50,50,0.7)';
+      } else {
+        infoEl.textContent = 'WASD to move · A/D to turn · Click & drag to orbit · F for super mode';
+        infoEl.style.background = 'rgba(0,0,0,0.5)';
+      }
       break;
     }
     case COMBAT:

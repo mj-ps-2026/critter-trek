@@ -12,11 +12,13 @@ export class Controls {
     this.distance = 8;
     this.distanceTarget = 8;
 
-    this.keys = { forward: false, backward: false, left: false, right: false };
+    this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
     this.isDragging = false;
     this.prevMouse = { x: 0, y: 0 };
     this.moveSpeed = 4;
     this.turnSpeed = 2.5;
+    this.superMode = false;
+    this.superSpeed = 50;
 
     this.setup();
   }
@@ -56,18 +58,32 @@ export class Controls {
       case 'KeyS': this.keys.backward = pressed; break;
       case 'KeyA': this.keys.left = pressed; break;
       case 'KeyD': this.keys.right = pressed; break;
+      case 'Space': this.keys.up = pressed; break;
+      case 'ShiftLeft': case 'ShiftRight': this.keys.down = pressed; break;
+      case 'KeyF': if (pressed) this.superMode = !this.superMode; break;
     }
   }
 
   update(dt) {
     this.distance += (this.distanceTarget - this.distance) * 0.05;
 
-    if (this.keys.left) {
-      this.animal.group.rotation.y += this.turnSpeed * dt;
+    if (this.superMode) {
+      this.#updateSuper(dt);
+    } else {
+      this.#updateNormal(dt);
     }
-    if (this.keys.right) {
-      this.animal.group.rotation.y -= this.turnSpeed * dt;
-    }
+
+    const target = this.animal.getPosition();
+    const cx = target.x + this.distance * Math.sin(this.theta) * Math.cos(this.phi);
+    const cy = target.y + this.distance * Math.sin(this.phi);
+    const cz = target.z + this.distance * Math.cos(this.theta) * Math.cos(this.phi);
+    this.camera.position.set(cx, cy, cz);
+    this.camera.lookAt(target.x, target.y + 0.5, target.z);
+  }
+
+  #updateNormal(dt) {
+    if (this.keys.left) this.animal.group.rotation.y += this.turnSpeed * dt;
+    if (this.keys.right) this.animal.group.rotation.y -= this.turnSpeed * dt;
 
     const localMove = new THREE.Vector3();
     if (this.keys.forward) localMove.z = -1;
@@ -84,12 +100,30 @@ export class Controls {
     }
 
     this.animal.update(dt, this.moveSpeed, isMoving);
+  }
 
-    const target = this.animal.getPosition();
-    const cx = target.x + this.distance * Math.sin(this.theta) * Math.cos(this.phi);
-    const cy = target.y + this.distance * Math.sin(this.phi);
-    const cz = target.z + this.distance * Math.cos(this.theta) * Math.cos(this.phi);
-    this.camera.position.set(cx, cy, cz);
-    this.camera.lookAt(target.x, target.y + 0.5, target.z);
+  #updateSuper(dt) {
+    if (this.keys.left) this.animal.group.rotation.y += this.turnSpeed * dt;
+    if (this.keys.right) this.animal.group.rotation.y -= this.turnSpeed * dt;
+
+    const localMove = new THREE.Vector3();
+    if (this.keys.forward) localMove.z = -1;
+    if (this.keys.backward) localMove.z = 1;
+
+    const isMoving = localMove.length() > 0.01;
+
+    if (isMoving) {
+      localMove.normalize();
+      const worldMove = localMove.clone().applyQuaternion(this.animal.group.quaternion);
+      const pos = this.animal.group.position;
+      pos.x += worldMove.x * this.superSpeed * dt;
+      pos.y += worldMove.y * this.superSpeed * dt;
+      pos.z += worldMove.z * this.superSpeed * dt;
+    }
+
+    if (this.keys.up) this.animal.group.position.y += this.superSpeed * dt;
+    if (this.keys.down) this.animal.group.position.y -= this.superSpeed * dt;
+
+    this.animal.update(dt, this.superSpeed * 10, isMoving);
   }
 }
