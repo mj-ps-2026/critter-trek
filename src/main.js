@@ -5,6 +5,7 @@ import { Controls } from './controls.js';
 import { Wolf, WOLF_HP, WOLF_ATK, WOLF_DEF } from './wolf.js';
 import { Combat } from './combat.js';
 import { FaunaManager } from './fauna.js';
+import { ItemManager } from './items.js';
 import './style.css';
 
 const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2;
@@ -65,6 +66,7 @@ const chunkManager = new ChunkManager(scene, worldSeed);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
+const itemManager = new ItemManager(scene, chunkManager.getHeight);
 
 const animal = new Animal();
 const spawn = findSpawn(chunkManager.getHeight);
@@ -86,7 +88,8 @@ const combat = new Combat(
   () => {
     document.getElementById('game-over-overlay').style.display = 'flex';
     gameState = GAME_OVER;
-  }
+  },
+  itemManager
 );
 
 const clock = new THREE.Clock();
@@ -192,7 +195,7 @@ function updateDayNight(dt, foxPos) {
   moonLight.target.updateMatrixWorld();
   moonLight.intensity = Math.max(0, (moonFactor - 0.15) * 0.5) * (1 - dayFactor);
 
-  ambientLight.intensity = 0.15 + dayFactor * 0.25 + moonLight.intensity * 0.15;
+  ambientLight.intensity = 0.30 + dayFactor * 0.20 + moonLight.intensity * 0.15;
   hemiLight.intensity = dayFactor * 0.5;
 
   const skyHue = 0.62 - dayFactor * 0.07;
@@ -200,11 +203,11 @@ function updateDayNight(dt, foxPos) {
   const skyLum = Math.max(0.06, dayFactor * 0.55);
   sky.material.color.setHSL(skyHue, skySat, skyLum);
 
-  scene.fog.color.setHSL(skyHue, skySat * 0.4, Math.max(0.04, skyLum * 0.7));
+  scene.fog.color.setHSL(skyHue, skySat * 0.4, Math.max(0.08, skyLum * 0.7));
 
   stars.material.opacity = Math.max(0, 1 - dayFactor * 1.4);
 
-  renderer.toneMappingExposure = 0.35 + dayFactor * 0.65;
+  renderer.toneMappingExposure = 0.45 + dayFactor * 0.55;
 }
 
 function spawnWolf() {
@@ -228,6 +231,7 @@ function animate() {
       const pos = animal.group.position;
       chunkManager.update(pos);
       fauna.update(pos, dt);
+      itemManager.update(pos);
       updateDayNight(dt, pos);
 
       const targetWolfCount = 4;
@@ -279,15 +283,20 @@ function animate() {
         infoEl.textContent = 'SUPER MODE — WASD to fly · Space/Shift up/down · F to toggle';
         infoEl.style.background = 'rgba(200,50,50,0.7)';
       } else {
-        infoEl.textContent = 'WASD to move · Shift to sprint · A/D to turn · Click & drag to orbit · F for super mode';
+        const cnt = itemManager.getCounts();
+        let items = '';
+        if (cnt.stick) items += ` 🪵${cnt.stick}`;
+        if (cnt.rock) items += ` 🪨${cnt.rock}`;
+        infoEl.textContent = 'WASD to move · Shift to sprint · A/D to turn · Click & drag to orbit · F for super mode' + items;
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }
       break;
     }
     case COMBAT: {
+      const foxPos = animal.group.position;
       const ePos = combat.getEnemyPosition();
-      const mid = new THREE.Vector3().addVectors(pos, ePos).multiplyScalar(0.5);
-      const dist = pos.distanceTo(ePos);
+      const mid = new THREE.Vector3().addVectors(foxPos, ePos).multiplyScalar(0.5);
+      const dist = foxPos.distanceTo(ePos);
       const camDist = Math.max(4, dist * 0.6 + 3);
       camera.position.set(
         mid.x + camDist * 0.6,
@@ -295,6 +304,7 @@ function animate() {
         mid.z + camDist * 0.6
       );
       camera.lookAt(mid.x, mid.y + 0.5, mid.z);
+      combat.updateHUD(camera);
       sky.position.copy(camera.position);
       stars.position.copy(camera.position);
       break;

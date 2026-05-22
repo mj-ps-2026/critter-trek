@@ -11,20 +11,22 @@
 
     <div id="combat-flash"></div>
 
-    <div id="combat-overlay">
-      <div id="combat-panel">
-        <h2>⚔ Combat</h2>
-        <div id="combat-stats">
-          <div class="stat-row">
-            <span class="stat-label">🦊 Fox</span>
-            <span>HP: <span id="fox-hp">20</span></span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label"><span id="enemy-icon">🐺</span> <span id="enemy-name">Wolf</span></span>
-            <span>HP: <span id="enemy-hp">12</span></span>
-          </div>
-        </div>
-        <div id="combat-log"></div>
+    <div id="combat-hud" style="display:none">
+      <div id="fox-hud" class="combatant-hud">
+        <div class="hud-name">🦊 Fox</div>
+        <div class="hud-bar-bg"><div class="hud-bar-fill" id="fox-hp-fill"></div></div>
+        <div class="hud-hp-text"><span id="fox-hp">20</span>/20</div>
+      </div>
+      <div id="enemy-hud" class="combatant-hud">
+        <div class="hud-name"><span id="enemy-icon">🐺</span> <span id="enemy-name">Wolf</span></div>
+        <div class="hud-bar-bg"><div class="hud-bar-fill" id="enemy-hp-fill"></div></div>
+        <div class="hud-hp-text"><span id="enemy-hp">12</span>/<span id="enemy-max-hp">12</span></div>
+      </div>
+    </div>
+
+    <div id="combat-ui" style="display:none">
+      <div id="combat-log"></div>
+      <div id="combat-actions">
         <div id="combat-main-actions">
           <button id="btn-attack" class="btn-action">Attack</button>
           <button id="btn-defend" class="btn-action">Defend</button>
@@ -32,10 +34,15 @@
           <button id="btn-item" class="btn-action" disabled>Item</button>
         </div>
         <div id="combat-attack-types" style="display:none">
-          <button id="btn-attack-fast" class="btn-attack-type fast">⚡ Fast</button>
-          <button id="btn-attack-medium" class="btn-attack-type medium">🔵 Medium</button>
-          <button id="btn-attack-slow" class="btn-attack-type slow">💥 Slow</button>
-          <button id="btn-attack-back" class="btn-attack-back">← Back</button>
+          <button id="btn-attack-fast" class="btn-atk fast">⚡ Fast</button>
+          <button id="btn-attack-medium" class="btn-atk medium">🔵 Medium</button>
+          <button id="btn-attack-slow" class="btn-atk slow">💥 Slow</button>
+          <button id="btn-attack-back" class="btn-atk back">← Back</button>
+        </div>
+        <div id="combat-item-types" style="display:none">
+          <button id="btn-item-stick" class="btn-item">🪵 Stick <span id="item-stick-count">0</span></button>
+          <button id="btn-item-rock" class="btn-item">🪨 Rock <span id="item-rock-count">0</span></button>
+          <button id="btn-item-back" class="btn-atk back">← Back</button>
         </div>
       </div>
     </div>
