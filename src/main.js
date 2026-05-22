@@ -232,7 +232,11 @@ function animate() {
       updateDayNight(dt, pos);
 
       const targetWolfCount = 4;
-      while (wolves.length < targetWolfCount) spawnWolf();
+      let wolfAttempts = 0;
+      while (wolves.length < targetWolfCount && wolfAttempts < 100) {
+        wolfAttempts++;
+        spawnWolf();
+      }
 
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos);

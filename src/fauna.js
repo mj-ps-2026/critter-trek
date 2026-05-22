@@ -272,7 +272,9 @@ export class FaunaManager {
     });
 
     const targetCount = 30;
-    while (this.animals.length < targetCount) {
+    let faunaAttempts = 0;
+    while (this.animals.length < targetCount && faunaAttempts < 500) {
+      faunaAttempts++;
       const a = Math.random() * Math.PI * 2;
       const r = 12 + Math.random() * 25;
       const px = foxPos.x + Math.cos(a) * r;
