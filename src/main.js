@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ChunkManager } from './world.js';
 import { Animal } from './animal.js';
 import { Controls } from './controls.js';
-import { Wolf } from './wolf.js';
+import { Wolf, WOLF_HP, WOLF_ATK, WOLF_DEF } from './wolf.js';
 import { Combat } from './combat.js';
 import { FaunaManager } from './fauna.js';
 import './style.css';
@@ -79,10 +79,9 @@ camera.lookAt(0, 0, 0);
 const wolves = [];
 
 const combat = new Combat(
-  (wolf) => {
+  (creature) => {
     gameState = EXPLORE;
-    const idx = wolves.indexOf(wolf);
-    if (idx !== -1) { wolf.removeFrom(scene); wolves.splice(idx, 1); }
+    creature.removeFrom(scene);
   },
   () => {
     document.getElementById('game-over-overlay').style.display = 'flex';
@@ -193,7 +192,7 @@ function updateDayNight(dt, foxPos) {
   moonLight.target.updateMatrixWorld();
   moonLight.intensity = Math.max(0, (moonFactor - 0.15) * 0.5) * (1 - dayFactor);
 
-  ambientLight.intensity = 0.03 + dayFactor * 0.35 + moonLight.intensity * 0.15;
+  ambientLight.intensity = 0.15 + dayFactor * 0.25 + moonLight.intensity * 0.15;
   hemiLight.intensity = dayFactor * 0.5;
 
   const skyHue = 0.62 - dayFactor * 0.07;
@@ -240,8 +239,37 @@ function animate() {
 
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos);
-        if (result === 'attacking') { gameState = COMBAT; combat.start(wolf); break; }
+        if (result === 'attacking') {
+          gameState = COMBAT;
+          combat.start({
+            hp: WOLF_HP, atk: WOLF_ATK, def: WOLF_DEF,
+            displayName: 'Wolf', icon: '🐺',
+            removeFrom: (s) => {
+              wolf.removeFrom(s);
+              const idx = wolves.indexOf(wolf);
+              if (idx !== -1) wolves.splice(idx, 1);
+            }
+          }, animal.group, wolf.group);
+          break;
+        }
       }
+
+      for (const faunaAnimal of fauna.animals) {
+        if (faunaAnimal.group.position.distanceTo(pos) < 0.8) {
+          gameState = COMBAT;
+          const creature = faunaAnimal;
+          combat.start({
+            hp: creature.hp, atk: creature.atk, def: creature.def,
+            displayName: creature.displayName, icon: creature.icon,
+            removeFrom: (s) => {
+              creature.removeFrom(s);
+              fauna.animals = fauna.animals.filter(a => a !== creature);
+            }
+          }, animal.group, creature.group);
+          break;
+        }
+      }
+
       controls.update(dt);
 
       sky.position.copy(camera.position);
@@ -251,12 +279,26 @@ function animate() {
         infoEl.textContent = 'SUPER MODE — WASD to fly · Space/Shift up/down · F to toggle';
         infoEl.style.background = 'rgba(200,50,50,0.7)';
       } else {
-        infoEl.textContent = 'WASD to move · A/D to turn · Click & drag to orbit · F for super mode';
+        infoEl.textContent = 'WASD to move · Shift to sprint · A/D to turn · Click & drag to orbit · F for super mode';
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }
       break;
     }
-    case COMBAT: break;
+    case COMBAT: {
+      const ePos = combat.getEnemyPosition();
+      const mid = new THREE.Vector3().addVectors(pos, ePos).multiplyScalar(0.5);
+      const dist = pos.distanceTo(ePos);
+      const camDist = Math.max(4, dist * 0.6 + 3);
+      camera.position.set(
+        mid.x + camDist * 0.6,
+        mid.y + 2.5,
+        mid.z + camDist * 0.6
+      );
+      camera.lookAt(mid.x, mid.y + 0.5, mid.z);
+      sky.position.copy(camera.position);
+      stars.position.copy(camera.position);
+      break;
+    }
     case GAME_OVER: break;
   }
 

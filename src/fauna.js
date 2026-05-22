@@ -19,12 +19,17 @@ class FaunaAnimal {
     this.speed = 2;
     this.fleeDist = 12;
     this.roamRadius = 15;
+    this.hp = 5;
+    this.atk = 2;
+    this.def = 0;
+    this.displayName = 'Creature';
+    this.icon = '🐾';
 
     switch (type) {
-      case 'rabbit': this.speed = 5; this.fleeDist = 10; this.roamRadius = 10; break;
-      case 'deer':   this.speed = 4; this.fleeDist = 20; this.roamRadius = 25; break;
-      case 'lizard': this.speed = 3.5; this.fleeDist = 8; this.roamRadius = 8; break;
-      case 'bear':   this.speed = 2.5; this.fleeDist = 16; this.roamRadius = 20; break;
+      case 'rabbit': this.speed = 5; this.fleeDist = 10; this.roamRadius = 10; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Rabbit'; this.icon = '🐇'; break;
+      case 'deer':   this.speed = 4; this.fleeDist = 20; this.roamRadius = 25; this.hp = 8; this.atk = 3; this.def = 1; this.displayName = 'Deer'; this.icon = '🦌'; break;
+      case 'lizard': this.speed = 3.5; this.fleeDist = 8; this.roamRadius = 8; this.hp = 4; this.atk = 1; this.def = 0; this.displayName = 'Lizard'; this.icon = '🦎'; break;
+      case 'bear':   this.speed = 2.5; this.fleeDist = 16; this.roamRadius = 20; this.hp = 18; this.atk = 6; this.def = 2; this.displayName = 'Bear'; this.icon = '🐻'; break;
     }
 
     this.group.position.set(position.x, getHeight(position.x, position.z), position.z);

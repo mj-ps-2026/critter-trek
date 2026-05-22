@@ -99,8 +99,24 @@ export class Animal {
     this.group.add(this.tail);
   }
 
-  update(dt, speed, isMoving) {
+  update(dt, speed, isMoving, isSwimming) {
     this.clock += dt * speed * 4;
+
+    if (isSwimming) {
+      const phase = isMoving ? this.clock * 1.5 : Date.now() * 0.003;
+      this.legs[0].rotation.x = Math.sin(phase) * 0.6;
+      this.legs[1].rotation.x = -Math.sin(phase) * 0.6;
+      this.legs[2].rotation.x = -Math.sin(phase) * 0.6;
+      this.legs[3].rotation.x = Math.sin(phase) * 0.6;
+
+      const bob = Math.sin(Date.now() * 0.004) * 0.04;
+      this.body.position.y = 0.3 + bob;
+      this.body.rotation.z = Math.sin(Date.now() * 0.002) * 0.08;
+      this.head.position.y = 0.52 + bob * 0.8;
+
+      this.tail.rotation.z = Math.sin(Date.now() * 0.003) * 0.4;
+      return;
+    }
 
     const legSwing = isMoving ? Math.sin(this.clock) * 0.5 : 0;
     this.legs[0].rotation.x = legSwing;
@@ -110,6 +126,7 @@ export class Animal {
 
     const bob = isMoving ? Math.sin(this.clock * 2) * 0.025 : 0;
     this.body.position.y = 0.3 + bob;
+    this.body.rotation.z = 0;
     this.head.position.y = 0.5 + bob * 0.8;
 
     const tailWag = isMoving ? Math.sin(this.clock * 0.5) * 0.3 : Math.sin(Date.now() * 0.002) * 0.1;

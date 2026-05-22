@@ -12,13 +12,14 @@ export class Controls {
     this.distance = 8;
     this.distanceTarget = 8;
 
-    this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
+    this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false, sprint: false };
     this.isDragging = false;
     this.prevMouse = { x: 0, y: 0 };
     this.moveSpeed = 4;
     this.turnSpeed = 2.5;
     this.superMode = false;
     this.superSpeed = 50;
+    this.isSwimming = false;
 
     this.setup();
   }
@@ -59,7 +60,7 @@ export class Controls {
       case 'KeyA': this.keys.left = pressed; break;
       case 'KeyD': this.keys.right = pressed; break;
       case 'Space': this.keys.up = pressed; break;
-      case 'ShiftLeft': case 'ShiftRight': this.keys.down = pressed; break;
+      case 'ShiftLeft': case 'ShiftRight': this.keys.down = pressed; this.keys.sprint = pressed; break;
       case 'KeyF': if (pressed) this.superMode = !this.superMode; break;
     }
   }
@@ -90,16 +91,35 @@ export class Controls {
     if (this.keys.backward) localMove.z = 1;
 
     const isMoving = localMove.length() > 0.01;
+    const sprintMult = this.keys.sprint ? 1.6 : 1;
+
+    const pos = this.animal.group.position;
 
     if (isMoving) {
       const worldMove = localMove.clone().applyQuaternion(this.animal.group.quaternion);
-      const pos = this.animal.group.position;
-      pos.x += worldMove.x * this.moveSpeed * dt;
-      pos.z += worldMove.z * this.moveSpeed * dt;
-      pos.y = this.getHeight(pos.x, pos.z);
+      const newX = pos.x + worldMove.x * this.moveSpeed * sprintMult * dt;
+      const newZ = pos.z + worldMove.z * this.moveSpeed * sprintMult * dt;
+      const terrainY = this.getHeight(newX, newZ);
+
+      pos.x = newX;
+      pos.z = newZ;
+
+      if (terrainY <= 0) {
+        this.isSwimming = true;
+        pos.y = 0 + Math.sin(Date.now() * 0.003) * 0.12;
+      } else {
+        this.isSwimming = false;
+        pos.y = terrainY;
+      }
+    } else {
+      const terrainY = this.getHeight(pos.x, pos.z);
+      this.isSwimming = terrainY <= 0;
+      if (this.isSwimming) {
+        pos.y = 0 + Math.sin(Date.now() * 0.003) * 0.12;
+      }
     }
 
-    this.animal.update(dt, this.moveSpeed, isMoving);
+    this.animal.update(dt, this.moveSpeed * sprintMult, isMoving, this.isSwimming);
   }
 
   #updateSuper(dt) {

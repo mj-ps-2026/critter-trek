@@ -17,11 +17,24 @@ canvas { display: block; }
   opacity: 0.7;
 }
 
+#combat-flash {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.08s;
+}
+#combat-flash.active {
+  opacity: 1;
+}
+
 #combat-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.65);
   z-index: 10;
   align-items: center;
   justify-content: center;
@@ -32,7 +45,7 @@ canvas { display: block; }
   border: 2px solid #e94560;
   border-radius: 12px;
   padding: 24px;
-  width: 360px;
+  width: 400px;
   max-width: 90vw;
   color: #eee;
   font-family: system-ui, sans-serif;
@@ -72,27 +85,47 @@ canvas { display: block; }
 
 #combat-log div { margin-bottom: 3px; }
 
-#combat-actions {
+#combat-main-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+}
+#combat-main-actions button { flex: 1; }
+
+#combat-attack-types {
+  display: flex;
+  gap: 8px;
 }
 
-#combat-actions button {
-  flex: 1;
+.btn-action, .btn-attack-type, .btn-attack-back {
   padding: 10px;
   border: none;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.1s;
 }
+.btn-action:active, .btn-attack-type:active { transform: scale(0.97); }
+.btn-action:disabled, .btn-attack-type:disabled { opacity: 0.5; cursor: default; }
 
-#combat-actions button:active { transform: scale(0.97); }
-#combat-actions button:disabled { opacity: 0.5; cursor: default; }
+#btn-attack { background: #e94560; color: #fff; flex: 1; }
+#btn-defend { background: #4a6fa5; color: #fff; flex: 1; }
+#btn-flee { background: #6b6b6b; color: #ddd; flex: 1; }
+#btn-item { background: #3a3a3a; color: #888; flex: 1; }
 
-#btn-attack { background: #e94560; color: #fff; }
-#btn-flee { background: #333; color: #ccc; }
+.btn-attack-type {
+  flex: 1;
+  color: #fff;
+}
+.btn-attack-type.fast { background: #2d8a4e; }
+.btn-attack-type.medium { background: #2a6bb0; }
+.btn-attack-type.slow { background: #a83232; }
+
+.btn-attack-back {
+  background: #444;
+  color: #ccc;
+  padding: 10px 14px;
+}
 
 #game-over-overlay {
   display: none;
