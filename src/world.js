@@ -372,7 +372,7 @@ function mountainHeight(mountain, maxExtra) {
 
 function getTerrainColor(x, y, z, getBiomeInfo) {
   const bio = getBiomeInfo(x, z);
-  const { temp, moist, magic, land, mountain } = bio;
+  const { continent, temp, moist, magic, land, mountain } = bio;
 
   const desert = smoothstep(temp, 0.15, 0.45) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain * 0.4);
   const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain * 0.3);

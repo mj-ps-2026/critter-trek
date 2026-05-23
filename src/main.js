@@ -1,13 +1,50 @@
+console.log('[main.js] Module started executing');
+
+window.__moduleExecuted = true;
+
+window.addEventListener('unhandledrejection', e => {
+  console.log('[main.js] Unhandled promise rejection:', e.reason);
+});
+
 import * as THREE from 'three';
+console.log('[main.js] THREE imported, version:', THREE.REVISION);
+
 import { ChunkManager } from './world.js';
+console.log('[main.js] ChunkManager imported');
+
 import { Animal } from './animal.js';
+console.log('[main.js] Animal imported');
+
 import { Controls } from './controls.js';
+console.log('[main.js] Controls imported');
+
 import { Wolf, pickEnemyType } from './wolf.js';
+console.log('[main.js] Wolf imported');
+
 import { Combat } from './combat.js';
+console.log('[main.js] Combat imported');
+
 import { FaunaManager } from './fauna.js';
+console.log('[main.js] FaunaManager imported');
+
 import { ItemManager } from './items.js';
+console.log('[main.js] ItemManager imported');
+
 import { CaveManager, pickCaveEnemyType } from './cave.js';
+console.log('[main.js] CaveManager imported');
+
 import './style.css';
+console.log('[main.js] style.css imported');
+
+const _log = document.getElementById('info');
+if (_log) _log.textContent = 'Loading...';
+const _loading = document.getElementById('loading');
+if (_loading) _loading.style.display = 'none';
+console.log('[main.js] Loading overlay hidden');
+
+// ── Reset leftover DOM state from previous page lifecycle ──
+const _overlay = document.getElementById('game-over-overlay');
+if (_overlay) _overlay.style.display = 'none';
 
 const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2, CAVE = 3;
 let gameState = EXPLORE;
@@ -22,16 +59,23 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.9;
+renderer.setClearColor(0x1a1a2e);
 document.body.prepend(renderer.domElement);
+console.log('[main.js] Renderer created, canvas in DOM, size:', window.innerWidth, 'x', window.innerHeight);
 
+console.log('[main.js] Step: creating sky dome...');
 const sky = createSkyDome(scene);
+console.log('[main.js] Step: sky dome created');
 
+console.log('[main.js] Step: ambient light');
 const ambientLight = new THREE.AmbientLight(0x303050, 0.35);
 scene.add(ambientLight);
 
+console.log('[main.js] Step: hemi light');
 const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a6d44, 0.5);
 scene.add(hemiLight);
 
+console.log('[main.js] Step: sun light');
 const sunLight = new THREE.DirectionalLight(0xFFD58E, 1.5);
 sunLight.position.set(50, 60, 30);
 sunLight.castShadow = true;
@@ -47,73 +91,132 @@ sunLight.shadow.bias = -0.0005;
 sunLight.shadow.normalBias = 0.03;
 scene.add(sunLight);
 
+console.log('[main.js] Step: fill light');
 const fillLight = new THREE.DirectionalLight(0x6B8EC5, 0.3);
 fillLight.position.set(-40, 20, -40);
 scene.add(fillLight);
 
+console.log('[main.js] Step: rim light');
 const rimLight = new THREE.DirectionalLight(0xFFEECC, 0.3);
 rimLight.position.set(-30, 10, 50);
 scene.add(rimLight);
 
+console.log('[main.js] Step: moon light');
 const moonLight = new THREE.DirectionalLight(0x4466AA, 0);
 moonLight.position.set(-50, 40, -40);
 moonLight.target.position.set(0, 0, 0);
 scene.add(moonLight);
 
+console.log('[main.js] Step: stars');
 const stars = createStars(scene);
 
+console.log('[main.js] Step: chunk manager');
 const worldSeed = Math.floor(Math.random() * 100000);
 const chunkManager = new ChunkManager(scene, worldSeed);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
+console.log('[main.js] Step: fauna / items / cave managers');
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 const itemManager = new ItemManager(scene, chunkManager.getHeight);
 const caveManager = new CaveManager(scene, chunkManager.getHeight);
 let inCave = false;
 
+console.log('[main.js] Step: animal creation and spawn');
 const animal = new Animal();
 const spawn = findSpawn(chunkManager.getHeight);
+console.log('[main.js] Spawn found:', spawn);
 animal.group.position.set(spawn.x, spawn.y, spawn.z);
 scene.add(animal.group);
 
+console.log('[main.js] Step: controls');
 const controls = new Controls(camera, animal, renderer.domElement, chunkManager.getHeight);
 
+console.log('[main.js] Step: camera init');
 camera.position.set(5, 5, 5);
 camera.lookAt(0, 0, 0);
 
 const wolves = [];
 
+console.log('[main.js] Step: combat');
 const combat = new Combat(
   (creature) => {
     gameState = EXPLORE;
+    const xpGain = Math.max(2, Math.floor(creature.hp * XP_PER_ENEMY_HP));
+    foxCurrentHP = combat.foxHP;
+    addXP(xpGain);
     creature.removeFrom(scene);
   },
   () => {
-    document.getElementById('game-over-overlay').style.display = 'flex';
+    const overlay = document.getElementById('game-over-overlay');
+    if (!overlay) return;
+    const statsEl = document.getElementById('game-over-stats');
+    if (statsEl) statsEl.textContent = `Reached Level ${foxLevel} · ${Math.floor(foxXP)} XP`;
+    overlay.style.display = 'flex';
     gameState = GAME_OVER;
+    const restartBtn = document.getElementById('btn-restart');
+    if (restartBtn) restartBtn.onclick = () => location.reload();
   },
   itemManager
 );
+console.log('[main.js] Step: combat created');
 
+// Use Clock despite deprecation warning - Timer needs extra update() calls
 const clock = new THREE.Clock();
 const infoEl = document.getElementById('info');
 
 let dayTime = Math.PI * 0.6;
 const dayLength = 90;
 
+// ── Fox progression ──
+const LEVEL_XP_BASE = 15;
+const LEVEL_XP_SCALE = 1.4;
+const BASE_HP = 20;
+const BASE_ATK = 5;
+const BASE_DEF = 2;
+const HP_PER_LEVEL = 4;
+const ATK_PER_LEVEL = 0.8;
+const DEF_PER_LEVEL = 0.4;
+const XP_PER_ENEMY_HP = 0.6;
+const REGEN_HP_PER_SEC = 0.3;
+
+let foxLevel = 1;
+let foxXP = 0;
+let foxCurrentHP = BASE_HP;
+
+function getMaxHP(level) { return Math.floor(BASE_HP + (level - 1) * HP_PER_LEVEL); }
+function getATK(level) { return BASE_ATK + (level - 1) * ATK_PER_LEVEL; }
+function getDEF(level) { return BASE_DEF + (level - 1) * DEF_PER_LEVEL; }
+function xpForLevel(level) { return Math.floor(LEVEL_XP_BASE * Math.pow(level, LEVEL_XP_SCALE)); }
+
+function addXP(amount) {
+  foxXP += amount;
+  while (foxXP >= xpForLevel(foxLevel)) {
+    foxXP -= xpForLevel(foxLevel);
+    foxLevel++;
+    foxCurrentHP = Math.min(foxCurrentHP + 5, getMaxHP(foxLevel));
+    infoEl.textContent = `🎉 Level ${foxLevel}! HP +${HP_PER_LEVEL}`;
+    infoEl.style.background = 'rgba(50,200,50,0.8)';
+    setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+  }
+}
 const keys = {};
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 function findSpawn(getHeight) {
-  for (let i = 0; i < 100; i++) {
-    const x = (Math.random() - 0.5) * 60;
-    const z = (Math.random() - 0.5) * 60;
+  for (let i = 0; i < 500; i++) {
+    const x = (Math.random() - 0.5) * 200;
+    const z = (Math.random() - 0.5) * 200;
     const y = getHeight(x, z);
     if (y > 1) return { x, y, z };
   }
-  const y = getHeight(0, 0);
-  return { x: 0, y, z: 0 };
+  for (let i = 0; i < 100; i++) {
+    const x = (Math.random() - 0.5) * 400;
+    const z = (Math.random() - 0.5) * 400;
+    const y = getHeight(x, z);
+    if (y > 0) return { x, y, z };
+  }
+  return { x: 0, y: Math.max(1, getHeight(0, 0)), z: 0 };
 }
 
 function createSkyDome(scene) {
@@ -230,9 +333,14 @@ function spawnWolf() {
   wolves.push(wolf);
 }
 
+let frameCount = 0;
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
+  frameCount++;
+  if (frameCount <= 3 || frameCount % 60 === 0) {
+    console.log('[main.js] animate frame', frameCount, 'dt:', dt, 'state:', gameState);
+  }
 
   switch (gameState) {
     case EXPLORE: {
@@ -262,7 +370,7 @@ function animate() {
               const idx = wolves.indexOf(wolf);
               if (idx !== -1) wolves.splice(idx, 1);
             }
-          }, animal.group, wolf.group);
+          }, animal.group, wolf.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel));
           break;
         }
       }
@@ -278,7 +386,7 @@ function animate() {
               creature.removeFrom(s);
               fauna.animals = fauna.animals.filter(a => a !== creature);
             }
-          }, animal.group, creature.group);
+          }, animal.group, creature.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel));
           break;
         }
       }
@@ -286,6 +394,8 @@ function animate() {
       if (caveManager.entranceMarkers.length < 4 && Math.random() < 0.002) {
         caveManager.placeEntranceNear(pos);
       }
+
+      foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + REGEN_HP_PER_SEC * dt);
 
       const entrance = caveManager.getNearestEntrance(pos);
       if (entrance) {
@@ -313,7 +423,9 @@ function animate() {
         let items = '';
         if (cnt.stick) items += ` 🪵${cnt.stick}`;
         if (cnt.rock) items += ` 🪨${cnt.rock}`;
-        infoEl.textContent = 'WASD to move · Shift to sprint · A/D to turn · Click & drag to orbit · F for super mode' + items;
+        const maxHP = getMaxHP(foxLevel);
+        const nextXP = xpForLevel(foxLevel);
+        infoEl.textContent = `Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP} · WASD · Shift sprint · A/D turn · F super` + items;
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }
       break;
@@ -374,7 +486,7 @@ function animate() {
               const idx = wolves.indexOf(wolf);
               if (idx !== -1) wolves.splice(idx, 1);
             }
-          }, animal.group, wolf.group);
+          }, animal.group, wolf.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel));
           break;
         }
       }

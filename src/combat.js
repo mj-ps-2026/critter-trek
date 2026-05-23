@@ -6,7 +6,7 @@ const ATTACKS = {
   slow:   { key: 'slow',   name: 'Slow',    minDmg: 6, maxDmg: 14, hitChance: 0.5, eWeight: 0.25 },
 };
 
-const FOX_MAX_HP = 20;
+const FOX_BASE_HP = 20;
 const FOX_ATK = 5;
 const FOX_DEF = 2;
 const DEF_HIT_MULT = 0.5;
@@ -23,7 +23,8 @@ export class Combat {
     this.creature = null;
     this.foxGroup = null;
     this.enemyGroup = null;
-    this.foxHP = FOX_MAX_HP;
+    this.foxHP = FOX_BASE_HP;
+    this.foxMaxHP = FOX_BASE_HP;
     this.foxATK = FOX_ATK;
     this.foxDEF = FOX_DEF;
     this.enemyHP = 0;
@@ -45,6 +46,7 @@ export class Combat {
     this.foxHPEl = document.getElementById('fox-hp');
     this.foxFill = document.getElementById('fox-hp-fill');
     this.enemyHPEl = document.getElementById('enemy-hp');
+    this.foxMaxEl = document.getElementById('fox-max-hp');
     this.enemyMaxEl = document.getElementById('enemy-max-hp');
     this.enemyFill = document.getElementById('enemy-hp-fill');
     this.enemyNameEl = document.getElementById('enemy-name');
@@ -71,11 +73,14 @@ export class Combat {
     document.getElementById('btn-item-back').addEventListener('click', () => this.#showMainActions());
   }
 
-  start(creature, foxGroup, enemyGroup) {
+  start(creature, foxGroup, enemyGroup, foxHP, foxMaxHP, foxATK, foxDEF) {
     this.creature = creature;
     this.foxGroup = foxGroup;
     this.enemyGroup = enemyGroup;
-    this.foxHP = FOX_MAX_HP;
+    this.foxHP = foxHP ?? FOX_BASE_HP;
+    this.foxMaxHP = foxMaxHP ?? FOX_BASE_HP;
+    this.foxATK = foxATK ?? FOX_ATK;
+    this.foxDEF = foxDEF ?? FOX_DEF;
     this.enemyHP = creature.hp;
     this.enemyMaxHP = creature.hp;
     this.enemyATK = creature.atk;
@@ -230,62 +235,73 @@ export class Combat {
     const wasDefending = this.isEnemyDefending;
     this.isEnemyDefending = false;
 
-    this.#startAnim('fox', speed);
+    try {
+      this.#startAnim('fox', speed);
 
-    if (Math.random() < atk.hitChance * hitMult) {
-      const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
-      const dmg = Math.max(1, Math.floor(raw * dmgMult - this.enemyDEF));
-      this.enemyHP -= dmg;
-      let msg = `Fox uses ${atk.name} for ${dmg} damage!`;
-      if (wasDefending) msg += ' (enemy blocked some)';
-      this.#addLog(msg);
-      this.#updateHP();
-      if (this.enemyHP <= 0) {
-        this.#addLog(`${this.creature.displayName} defeated!`);
-        setTimeout(() => this.#end(), 1200);
-        return;
+      if (Math.random() < atk.hitChance * hitMult) {
+        const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
+        const dmg = Math.max(1, Math.floor(raw * dmgMult - this.enemyDEF));
+        this.enemyHP -= dmg;
+        let msg = `Fox uses ${atk.name} for ${dmg} damage!`;
+        if (wasDefending) msg += ' (enemy blocked some)';
+        this.#addLog(msg);
+        this.#updateHP();
+        if (this.enemyHP <= 0) {
+          this.#addLog(`${this.creature.displayName} defeated!`);
+          setTimeout(() => this.#end(), 1200);
+          return;
+        }
+      } else {
+        this.#addLog(`Fox's ${atk.name} missed!`);
       }
-    } else {
-      this.#addLog(`Fox's ${atk.name} missed!`);
+      setTimeout(() => this.#enemyTurn(), 600);
+    } catch (e) {
+      console.error('Combat error in doAttack:', e);
+      this.#playerTurn();
     }
-    setTimeout(() => this.#enemyTurn(), 600);
   }
 
   #enemyTurn() {
     if (!this.isActive) return;
-    const hpRatio = this.enemyHP / this.enemyMaxHP;
-    const defChance = hpRatio < 0.3 ? 0.5 : 0.35;
+    try {
+      const hpRatio = this.enemyHP / this.enemyMaxHP;
+      const defChance = hpRatio < 0.3 ? 0.5 : 0.35;
 
-    if (Math.random() < defChance) {
-      this.isEnemyDefending = true;
-      this.#addLog(`${this.creature.displayName} defends!`);
-      this.#playerTurn();
-      return;
-    }
-    this.isEnemyDefending = false;
-    const atk = this.#pickEnemyAttack();
-    this.#startAnim('enemy', atk.key);
-    const hitMult = this.isPlayerDefending ? DEF_HIT_MULT : 1;
-    const dmgMult = this.isPlayerDefending ? DEF_DMG_MULT : 1;
-    const wasDefending = this.isPlayerDefending;
-    this.isPlayerDefending = false;
-
-    if (Math.random() < atk.hitChance * hitMult) {
-      const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
-      const dmg = Math.max(1, Math.floor(raw * dmgMult - this.foxDEF));
-      this.foxHP -= dmg;
-      let msg = `${this.creature.displayName} uses ${atk.name} for ${dmg} damage!`;
-      if (wasDefending) msg += ' (fox blocked some)';
-      this.#addLog(msg);
-      this.#updateHP();
-      if (this.foxHP <= 0) {
-        this.#addLog('The fox has been defeated...');
-        this.isActive = false;
-        setTimeout(() => this.onGameOver(), 1500);
+      if (Math.random() < defChance) {
+        this.isEnemyDefending = true;
+        this.#addLog(`${this.creature.displayName} defends!`);
+        this.#playerTurn();
         return;
       }
-    } else {
-      this.#addLog(`${this.creature.displayName}'s ${atk.name} missed!`);
+      this.isEnemyDefending = false;
+      const atk = this.#pickEnemyAttack();
+      this.#startAnim('enemy', atk.key);
+      const hitMult = this.isPlayerDefending ? DEF_HIT_MULT : 1;
+      const dmgMult = this.isPlayerDefending ? DEF_DMG_MULT : 1;
+      const wasDefending = this.isPlayerDefending;
+      this.isPlayerDefending = false;
+
+      if (Math.random() < atk.hitChance * hitMult) {
+        const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
+        const dmg = Math.max(1, Math.floor(raw * dmgMult - this.foxDEF));
+        this.foxHP -= dmg;
+        let msg = `${this.creature.displayName} uses ${atk.name} for ${dmg} damage!`;
+        if (wasDefending) msg += ' (fox blocked some)';
+        this.#addLog(msg);
+        this.#updateHP();
+        if (this.foxHP <= 0) {
+          this.#addLog('The fox has been defeated...');
+          this.isActive = false;
+          this.hud.style.display = 'none';
+          this.ui.style.display = 'none';
+          this.onGameOver();
+          return;
+        }
+      } else {
+        this.#addLog(`${this.creature.displayName}'s ${atk.name} missed!`);
+      }
+    } catch (e) {
+      console.error('Combat error in enemyTurn:', e);
     }
     this.#playerTurn();
   }
@@ -312,19 +328,24 @@ export class Combat {
     this.isPlayerDefending = false;
     this.isEnemyDefending = false;
 
-    this.#startAnim('fox', 'fast');
+    try {
+      this.#startAnim('fox', 'fast');
 
-    const raw = item.minDmg + Math.random() * (item.maxDmg - item.minDmg);
-    const dmg = Math.max(1, Math.floor(raw - this.enemyDEF));
-    this.enemyHP -= dmg;
-    this.#addLog(`Fox uses ${item.name} for ${dmg} damage!`);
-    this.#updateHP();
-    if (this.enemyHP <= 0) {
-      this.#addLog(`${this.creature.displayName} defeated!`);
-      setTimeout(() => this.#end(), 1200);
-      return;
+      const raw = item.minDmg + Math.random() * (item.maxDmg - item.minDmg);
+      const dmg = Math.max(1, Math.floor(raw - this.enemyDEF));
+      this.enemyHP -= dmg;
+      this.#addLog(`Fox uses ${item.name} for ${dmg} damage!`);
+      this.#updateHP();
+      if (this.enemyHP <= 0) {
+        this.#addLog(`${this.creature.displayName} defeated!`);
+        setTimeout(() => this.#end(), 1200);
+        return;
+      }
+      setTimeout(() => this.#enemyTurn(), 600);
+    } catch (e) {
+      console.error('Combat error in useItem:', e);
+      this.#playerTurn();
     }
-    setTimeout(() => this.#enemyTurn(), 600);
   }
 
   #end() {
@@ -336,7 +357,8 @@ export class Combat {
 
   #updateHP() {
     this.foxHPEl.textContent = this.foxHP;
-    this.foxFill.style.width = Math.max(0, (this.foxHP / FOX_MAX_HP) * 100) + '%';
+    this.foxMaxEl.textContent = this.foxMaxHP;
+    this.foxFill.style.width = Math.max(0, (this.foxHP / this.foxMaxHP) * 100) + '%';
     this.enemyHPEl.textContent = this.enemyHP;
     this.enemyFill.style.width = Math.max(0, (this.enemyHP / this.enemyMaxHP) * 100) + '%';
   }

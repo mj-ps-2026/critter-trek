@@ -61,7 +61,9 @@ class ItemManager {
       return true;
     });
 
-    while (this.items.length < 12) {
+    let attempts = 0;
+    while (this.items.length < 12 && attempts < 200) {
+      attempts++;
       const a = Math.random() * Math.PI * 2;
       const r = 8 + Math.random() * 25;
       const x = foxPos.x + Math.cos(a) * r;
