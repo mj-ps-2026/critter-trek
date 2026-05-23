@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ChunkManager } from './world.js';
 import { Animal } from './animal.js';
 import { Controls } from './controls.js';
-import { Wolf, WOLF_HP, WOLF_ATK, WOLF_DEF } from './wolf.js';
+import { Wolf, pickEnemyType } from './wolf.js';
 import { Combat } from './combat.js';
 import { FaunaManager } from './fauna.js';
 import { ItemManager } from './items.js';
@@ -212,12 +212,13 @@ function updateDayNight(dt, foxPos) {
 
 function spawnWolf() {
   const angle = Math.random() * Math.PI * 2;
-  const dist = 30 + Math.random() * 20;
+  const dist = 25 + Math.random() * 25;
   const pos = animal.group.position.clone();
   pos.x += Math.cos(angle) * dist;
   pos.z += Math.sin(angle) * dist;
   pos.y = chunkManager.getHeight(pos.x, pos.z);
-  const wolf = new Wolf(pos, chunkManager.getHeight);
+  const typeId = pickEnemyType(chunkManager.getBiomeInfo, pos.x, pos.z);
+  const wolf = new Wolf(pos, chunkManager.getHeight, typeId);
   scene.add(wolf.group);
   wolves.push(wolf);
 }
@@ -234,7 +235,7 @@ function animate() {
       itemManager.update(pos);
       updateDayNight(dt, pos);
 
-      const targetWolfCount = 4;
+      const targetWolfCount = 7;
       let wolfAttempts = 0;
       while (wolves.length < targetWolfCount && wolfAttempts < 100) {
         wolfAttempts++;
@@ -245,9 +246,10 @@ function animate() {
         const result = wolf.update(dt, pos);
         if (result === 'attacking') {
           gameState = COMBAT;
+          const td = wolf.typeDef;
           combat.start({
-            hp: WOLF_HP, atk: WOLF_ATK, def: WOLF_DEF,
-            displayName: 'Wolf', icon: '🐺',
+            hp: td.hp, atk: td.atk, def: td.def,
+            displayName: td.name, icon: td.icon,
             removeFrom: (s) => {
               wolf.removeFrom(s);
               const idx = wolves.indexOf(wolf);
