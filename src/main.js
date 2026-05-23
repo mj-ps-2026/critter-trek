@@ -304,6 +304,7 @@ function animate() {
         mid.z + camDist * 0.6
       );
       camera.lookAt(mid.x, mid.y + 0.5, mid.z);
+      combat.updateAnim(dt);
       combat.updateHUD(camera);
       sky.position.copy(camera.position);
       stars.position.copy(camera.position);

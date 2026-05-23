@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 
 const ATTACKS = {
-  fast:   { name: 'Fast',    minDmg: 1, maxDmg: 4,  hitChance: 0.9, eWeight: 0.25 },
-  medium: { name: 'Medium',  minDmg: 3, maxDmg: 8,  hitChance: 0.7, eWeight: 0.50 },
-  slow:   { name: 'Slow',    minDmg: 6, maxDmg: 14, hitChance: 0.5, eWeight: 0.25 },
+  fast:   { key: 'fast',   name: 'Fast',    minDmg: 1, maxDmg: 4,  hitChance: 0.9, eWeight: 0.25 },
+  medium: { key: 'medium', name: 'Medium',  minDmg: 3, maxDmg: 8,  hitChance: 0.7, eWeight: 0.50 },
+  slow:   { key: 'slow',   name: 'Slow',    minDmg: 6, maxDmg: 14, hitChance: 0.5, eWeight: 0.25 },
 };
 
 const FOX_MAX_HP = 20;
@@ -32,6 +32,7 @@ export class Combat {
     this.enemyMaxHP = 0;
     this.isPlayerDefending = false;
     this.isEnemyDefending = false;
+    this.anim = null;
     this.#grab();
   }
 
@@ -119,6 +120,40 @@ export class Combat {
     hudEl.style.top = y + 'px';
   }
 
+  #startAnim(attacker, speed) {
+    const g = attacker === 'fox' ? this.foxGroup : this.enemyGroup;
+    const target = attacker === 'fox' ? this.enemyGroup : this.foxGroup;
+    const dir = new THREE.Vector3().subVectors(target.position, g.position);
+    dir.y = 0;
+    dir.normalize();
+    const dist = g.position.distanceTo(target.position) * 0.35;
+    const dur = speed === 'fast' ? 0.2 : speed === 'medium' ? 0.3 : 0.45;
+    this.anim = {
+      group: g,
+      start: g.position.clone(),
+      peak: g.position.clone().add(dir.multiplyScalar(dist)),
+      dur,
+      t: 0,
+    };
+  }
+
+  updateAnim(dt) {
+    if (!this.anim) return;
+    this.anim.t += dt;
+    const p = Math.min(1, this.anim.t / this.anim.dur);
+    if (p < 0.5) {
+      const f = p * 2;
+      this.anim.group.position.lerpVectors(this.anim.start, this.anim.peak, f);
+    } else {
+      const f = (p - 0.5) * 2;
+      this.anim.group.position.lerpVectors(this.anim.peak, this.anim.start, f);
+    }
+    if (p >= 1) {
+      this.anim.group.position.copy(this.anim.start);
+      this.anim = null;
+    }
+  }
+
   #faceEachOther() {
     if (!this.foxGroup || !this.enemyGroup) return;
     const fwd = new THREE.Vector3().subVectors(this.enemyGroup.position, this.foxGroup.position);
@@ -140,6 +175,7 @@ export class Combat {
     this.mainActions.style.display = 'none';
     this.attackTypes.style.display = 'flex';
     this.itemTypes.style.display = 'none';
+    this.#enableGroup(this.attackTypes);
   }
 
   #showItemTypes() {
@@ -149,6 +185,7 @@ export class Combat {
     this.mainActions.style.display = 'none';
     this.attackTypes.style.display = 'none';
     this.itemTypes.style.display = 'flex';
+    this.#enableGroup(this.itemTypes);
   }
 
   #disableAll() {
@@ -193,6 +230,8 @@ export class Combat {
     const wasDefending = this.isEnemyDefending;
     this.isEnemyDefending = false;
 
+    this.#startAnim('fox', speed);
+
     if (Math.random() < atk.hitChance * hitMult) {
       const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
       const dmg = Math.max(1, Math.floor(raw * dmgMult - this.enemyDEF));
@@ -225,6 +264,7 @@ export class Combat {
     }
     this.isEnemyDefending = false;
     const atk = this.#pickEnemyAttack();
+    this.#startAnim('enemy', atk.key);
     const hitMult = this.isPlayerDefending ? DEF_HIT_MULT : 1;
     const dmgMult = this.isPlayerDefending ? DEF_DMG_MULT : 1;
     const wasDefending = this.isPlayerDefending;
@@ -271,6 +311,8 @@ export class Combat {
     this.#disableAll();
     this.isPlayerDefending = false;
     this.isEnemyDefending = false;
+
+    this.#startAnim('fox', 'fast');
 
     const raw = item.minDmg + Math.random() * (item.maxDmg - item.minDmg);
     const dmg = Math.max(1, Math.floor(raw - this.enemyDEF));
