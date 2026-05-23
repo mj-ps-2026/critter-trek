@@ -37,6 +37,7 @@ export class ChunkManager {
       const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
       const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
       const crystal = smoothstep(magic, 0.45, 0.7) * land;
+      const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
 
       let h = 0;
       h += continent * 7;
@@ -87,6 +88,13 @@ export class ChunkManager {
 
       if (tundra > 0.3) {
         h += n2.noise2D(x * 0.03, z * 0.03) * tundra * 0.5;
+      }
+
+      if (canyon > 0.05) {
+        const nx = n2.noise2D(x * 0.004, z * 0.003);
+        const nz = n2.noise2D(x * 0.003, z * 0.004);
+        const cf = Math.abs(nx * nz * 1.5 + n2.noise2D(x * 0.006, z * 0.006) * 0.3);
+        h -= (1 - cf * cf) * 10 * canyon;
       }
 
       const flatSeafloor = continent * 2 - 7;
@@ -371,6 +379,7 @@ function getTerrainColor(x, y, z, getBiomeInfo) {
   const tundra = (1 - smoothstep(temp, -0.35, 0)) * (1 - mountain);
   const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
   const crystal = smoothstep(magic, 0.45, 0.7) * land;
+  const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
 
   if (y < SEA_LEVEL) {
     const depth = Math.min(1, (SEA_LEVEL - y) / 8);
@@ -380,6 +389,13 @@ function getTerrainColor(x, y, z, getBiomeInfo) {
   if (crystal > 0.3 && y > 0.5) {
     const hue = (Math.sin(x * 0.02 + z * 0.02) * 0.5 + 0.5) * 0.3 + 0.7;
     return hslToRgb(hue, 0.7, 0.35 + (y % 2) * 0.2);
+  }
+
+  if (canyon > 0.2) {
+    const depth = Math.max(0, Math.min(1, (y + 3) / 10));
+    const light = { r: 0.65, g: 0.35, b: 0.15 };
+    const dark = { r: 0.30, g: 0.15, b: 0.08 };
+    return lerpColor(light, dark, depth);
   }
 
   if (desert > 0.3) {

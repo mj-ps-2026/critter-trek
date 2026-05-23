@@ -6,9 +6,10 @@ import { Wolf, pickEnemyType } from './wolf.js';
 import { Combat } from './combat.js';
 import { FaunaManager } from './fauna.js';
 import { ItemManager } from './items.js';
+import { CaveManager, pickCaveEnemyType } from './cave.js';
 import './style.css';
 
-const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2;
+const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2, CAVE = 3;
 let gameState = EXPLORE;
 
 const scene = new THREE.Scene();
@@ -67,6 +68,8 @@ scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 const itemManager = new ItemManager(scene, chunkManager.getHeight);
+const caveManager = new CaveManager(scene, chunkManager.getHeight);
+let inCave = false;
 
 const animal = new Animal();
 const spawn = findSpawn(chunkManager.getHeight);
@@ -97,6 +100,10 @@ const infoEl = document.getElementById('info');
 
 let dayTime = Math.PI * 0.6;
 const dayLength = 90;
+
+const keys = {};
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
 
 function findSpawn(getHeight) {
   for (let i = 0; i < 100; i++) {
@@ -276,6 +283,23 @@ function animate() {
         }
       }
 
+      if (caveManager.entranceMarkers.length < 4 && Math.random() < 0.002) {
+        caveManager.placeEntranceNear(pos);
+      }
+
+      const entrance = caveManager.getNearestEntrance(pos);
+      if (entrance) {
+        infoEl.textContent = 'Cave entrance — walk in to explore';
+        infoEl.style.background = 'rgba(30,30,60,0.8)';
+        if (pos.distanceTo(entrance.pos) < 1.5) {
+          for (const w of wolves) w.removeFrom(scene);
+          wolves.length = 0;
+          caveManager.enterCave(animal.group);
+          gameState = CAVE;
+          break;
+        }
+      }
+
       controls.update(dt);
 
       sky.position.copy(camera.position);
@@ -313,6 +337,58 @@ function animate() {
       break;
     }
     case GAME_OVER: break;
+    case CAVE: {
+      const cp = animal.group.position;
+      const result = caveManager.update(cp, dt);
+      if (result === 'exit') {
+        for (const w of wolves) w.removeFrom(scene);
+        wolves.length = 0;
+        caveManager.exitCave(animal.group);
+        gameState = EXPLORE;
+        break;
+      }
+
+      const caveTarget = 5;
+      while (wolves.length < caveTarget) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 3 + Math.random() * 12;
+        const x = cp.x + Math.cos(a) * r;
+        const z = cp.z + Math.sin(a) * r;
+        const pos = new THREE.Vector3(x, 0.5, z);
+        const typeId = pickCaveEnemyType();
+        const enemy = new Wolf(pos, () => 0.5, typeId);
+        scene.add(enemy.group);
+        wolves.push(enemy);
+      }
+
+      for (const wolf of wolves) {
+        const res = wolf.update(dt, cp);
+        if (res === 'attacking') {
+          gameState = COMBAT;
+          const td = wolf.typeDef;
+          combat.start({
+            hp: td.hp, atk: td.atk, def: td.def,
+            displayName: td.name, icon: td.icon,
+            removeFrom: (s) => {
+              wolf.removeFrom(s);
+              const idx = wolves.indexOf(wolf);
+              if (idx !== -1) wolves.splice(idx, 1);
+            }
+          }, animal.group, wolf.group);
+          break;
+        }
+      }
+
+      camera.position.set(
+        cp.x + 5,
+        cp.y + 3,
+        cp.z + 5
+      );
+      camera.lookAt(cp.x, cp.y + 0.5, cp.z);
+      infoEl.textContent = 'Find the blue portal to escape!';
+      infoEl.style.background = 'rgba(20,10,40,0.8)';
+      break;
+    }
   }
 
   renderer.render(scene, camera);

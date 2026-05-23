@@ -57,6 +57,30 @@ const ENEMY_TYPES = {
     detectionRange: 20, attackRange: 1.5,
     biomes: ['plains', 'forest'], weight: 3,
   },
+  bat: {
+    id: 'bat', name: 'Cave Bat', icon: '🦇',
+    hp: 5, atk: 2, def: 0,
+    bodyColor: 0x3A2A2A, darkColor: 0x1A0A0A, accentColor: 0x6A4A4A,
+    scale: 0.5, speed: 3.5, patrolSpeed: 2.0, chaseSpeed: 4.5,
+    detectionRange: 18, attackRange: 0.8,
+    biomes: ['cave'], weight: 5,
+  },
+  spider: {
+    id: 'spider', name: 'Cave Spider', icon: '🕷️',
+    hp: 10, atk: 5, def: 1,
+    bodyColor: 0x2A1A3A, darkColor: 0x1A0A2A, accentColor: 0x6A3A8A,
+    scale: 0.7, speed: 2.0, patrolSpeed: 1.0, chaseSpeed: 3.0,
+    detectionRange: 20, attackRange: 1.2,
+    biomes: ['cave'], weight: 3,
+  },
+  lavabeast: {
+    id: 'lavabeast', name: 'Lava Beast', icon: '🔥',
+    hp: 22, atk: 8, def: 3,
+    bodyColor: 0x8A2A00, darkColor: 0x4A1500, accentColor: 0xFF6600,
+    scale: 1.1, speed: 1.5, patrolSpeed: 0.8, chaseSpeed: 2.2,
+    detectionRange: 24, attackRange: 2.0,
+    biomes: ['cave'], weight: 2,
+  },
 };
 
 const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, flatShading: true });
@@ -179,6 +203,46 @@ export class Wolf {
         spine.position.set(s * 0.2, bodyY + bodyH * 0.3, -bodyL * 0.2);
         spine.rotation.x = 0.3;
         this.group.add(spine);
+      }
+    }
+
+    if (t.id === 'bat') {
+      for (const s of [-1, 1]) {
+        const wing = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.4, 4), mat(dc));
+        wing.rotation.z = s * 0.7;
+        wing.rotation.x = 0.3;
+        wing.position.set(s * 0.3, 0.1, 0);
+        this.group.add(wing);
+      }
+    }
+
+    if (t.id === 'spider') {
+      const extraLegs = [
+        { x: 0.25, z: 0.55 }, { x: -0.25, z: 0.55 },
+        { x: 0.25, z: -0.55 }, { x: -0.25, z: -0.55 },
+      ];
+      for (const lp of extraLegs) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.025, 0.25, 4), mat(dc));
+        leg.position.set(lp.x * 1.2, 0, lp.z);
+        leg.rotation.z = lp.x > 0 ? 0.4 : -0.4;
+        this.group.add(leg);
+      }
+      for (const s of [-1, 1]) {
+        const fang = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.08, 4), mat(ac));
+        fang.position.set(s * 0.04, bodyY + 0.08, -bodyL * 0.5 - 0.1);
+        this.group.add(fang);
+      }
+    }
+
+    if (t.id === 'lavabeast') {
+      const glowMat = new THREE.MeshStandardMaterial({
+        color: 0xFF4400, emissive: 0xFF2200, emissiveIntensity: 0.4, flatShading: true,
+      });
+      for (let i = 0; i < 5; i++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 4), glowMat);
+        spike.position.set((Math.random() - 0.5) * 0.5, bodyY + bodyH * 0.4, (Math.random() - 0.5) * bodyL * 0.6);
+        spike.rotation.x = Math.random() * 0.5;
+        this.group.add(spike);
       }
     }
 
