@@ -20,6 +20,7 @@ export class Controls {
     this.superMode = false;
     this.superSpeed = 50;
     this.isSwimming = false;
+    this.drinkPressed = false;
 
     this.setup();
   }
@@ -62,6 +63,7 @@ export class Controls {
       case 'Space': this.keys.up = pressed; break;
       case 'ShiftLeft': case 'ShiftRight': this.keys.down = pressed; this.keys.sprint = pressed; break;
       case 'KeyF': if (pressed) this.superMode = !this.superMode; break;
+      case 'KeyE': if (pressed) this.drinkPressed = true; break;
     }
   }
 

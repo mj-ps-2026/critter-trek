@@ -324,14 +324,54 @@ class Chunk {
         if (ok) {
           treePositions.push({ x, z });
           let tree;
-          if (forest > 0.3) tree = rng() < 0.6 ? createPineTree(rng) : createOakTree(rng);
-          else if (swamp > 0.2) tree = createSwampTree(rng);
-          else if (tundra > 0.3) { tree = createPineTree(rng); tree.userData.baseScale = 0.3 + rng() * 0.3; }
-          else if (desert > 0.2) tree = createCactus(rng);
-          else if (bio.mountain > 0.4) { tree = createPineTree(rng); tree.userData.baseScale = 0.5 + rng() * 0.4; }
-          else if (canyon > 0.2) { tree = createPineTree(rng); tree.userData.baseScale = 0.4 + rng() * 0.3; }
-          else if (badlands > 0.15) { tree = createCactus(rng); tree.userData.baseScale = 0.3 + rng() * 0.3; }
-          else tree = rng() < 0.5 ? createPineTree(rng) : createOakTree(rng);
+          const rr = rng();
+          if (forest > 0.3) {
+            if (rr < 0.35) tree = createPineTree(rng);
+            else if (rr < 0.55) tree = createOakTree(rng);
+            else if (rr < 0.7) tree = createCherryTree(rng);
+            else if (rr < 0.85) tree = createMushroomTree(rng);
+            else tree = createCactus(rng);
+          } else if (swamp > 0.2) {
+            if (rr < 0.35) tree = createSwampTree(rng);
+            else if (rr < 0.55) tree = createMushroomTree(rng);
+            else if (rr < 0.7) tree = createDeadTree(rng);
+            else if (rr < 0.85) tree = createOakTree(rng);
+            else { tree = createPineTree(rng); tree.userData.baseScale = 0.4 + rng() * 0.3; }
+          } else if (tundra > 0.3) {
+            if (rr < 0.35) { tree = createPineTree(rng); tree.userData.baseScale = 0.3 + rng() * 0.3; }
+            else if (rr < 0.6) tree = createDeadTree(rng);
+            else if (rr < 0.75) tree = createOakTree(rng);
+            else tree = createCactus(rng);
+          } else if (desert > 0.2) {
+            if (rr < 0.35) tree = createCactus(rng);
+            else if (rr < 0.55) tree = createSaguaro(rng);
+            else if (rr < 0.7) tree = createPalmTree(rng);
+            else if (rr < 0.85) tree = createDeadTree(rng);
+            else { tree = createPineTree(rng); tree.userData.baseScale = 0.4 + rng() * 0.3; }
+          } else if (bio.mountain > 0.4) {
+            if (rr < 0.35) { tree = createPineTree(rng); tree.userData.baseScale = 0.5 + rng() * 0.4; }
+            else if (rr < 0.55) tree = createDeadTree(rng);
+            else if (rr < 0.7) tree = createOakTree(rng);
+            else if (rr < 0.85) tree = createCherryTree(rng);
+            else tree = createCactus(rng);
+          } else if (canyon > 0.2) {
+            if (rr < 0.3) { tree = createDeadTree(rng); tree.userData.baseScale = 0.4 + rng() * 0.3; }
+            else if (rr < 0.5) tree = createPalmTree(rng);
+            else if (rr < 0.7) tree = createCactus(rng);
+            else tree = createOakTree(rng);
+          } else if (badlands > 0.15) {
+            if (rr < 0.35) { tree = createCactus(rng); tree.userData.baseScale = 0.3 + rng() * 0.3; }
+            else if (rr < 0.55) tree = createDeadTree(rng);
+            else if (rr < 0.7) tree = createSaguaro(rng);
+            else if (rr < 0.85) tree = createOakTree(rng);
+            else { tree = createPineTree(rng); tree.userData.baseScale = 0.4 + rng() * 0.3; }
+          } else {
+            if (rr < 0.35) tree = createOakTree(rng);
+            else if (rr < 0.6) tree = createCherryTree(rng);
+            else if (rr < 0.75) tree = createPineTree(rng);
+            else if (rr < 0.9) tree = createPalmTree(rng);
+            else tree = createCactus(rng);
+          }
           tree.position.set(x, y, z);
           const s = tree.userData.baseScale || 1.0 + rng() * 0.8;
           tree.scale.setScalar(s);
@@ -650,6 +690,136 @@ function createCactus(rng) {
     arm.rotation.z = side * 0.3;
     arm.castShadow = true;
     g.add(arm);
+  }
+  return g;
+}
+
+function createPalmTree(rng) {
+  const g = new THREE.Group();
+  const h = 5 + rng() * 5;
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B6B3A, roughness: 0.9 });
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, h, 6), trunkMat);
+  trunk.position.y = h / 2;
+  trunk.rotation.z = (rng() - 0.5) * 0.15;
+  trunk.castShadow = true;
+  g.add(trunk);
+
+  const frondMat = new THREE.MeshStandardMaterial({ color: 0x2A6B2A, roughness: 0.7, flatShading: true });
+  const fronds = 5 + Math.floor(rng() * 4);
+  for (let i = 0; i < fronds; i++) {
+    const a = (i / fronds) * Math.PI * 2 + rng() * 0.2;
+    const frond = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.8 + rng() * 0.4, 4), frondMat);
+    frond.position.set(Math.cos(a) * 0.15, h, Math.sin(a) * 0.15);
+    frond.rotation.x = Math.cos(a) * 0.6;
+    frond.rotation.z = -Math.sin(a) * 0.6;
+    g.add(frond);
+  }
+  return g;
+}
+
+function createDeadTree(rng) {
+  const g = new THREE.Group();
+  const h = 4 + rng() * 5;
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3A2A1A, roughness: 0.95 });
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, h, 5), trunkMat);
+  trunk.position.y = h / 2;
+  trunk.castShadow = true;
+  g.add(trunk);
+
+  const branchMat = new THREE.MeshStandardMaterial({ color: 0x2A1A0A, roughness: 0.95 });
+  for (let i = 0; i < 3 + Math.floor(rng() * 3); i++) {
+    const a = rng() * Math.PI * 2;
+    const bh = 0.4 + rng() * 1.0;
+    const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, bh, 3), branchMat);
+    branch.position.set(Math.cos(a) * 0.15, h * (0.3 + rng() * 0.5), Math.sin(a) * 0.15);
+    branch.rotation.z = Math.cos(a) * 0.5;
+    branch.rotation.x = Math.sin(a) * 0.5;
+    g.add(branch);
+  }
+  return g;
+}
+
+function createCherryTree(rng) {
+  const g = new THREE.Group();
+  const trunkH = 3 + rng() * 3;
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5C3A1A, roughness: 0.9 });
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, trunkH, 6), trunkMat);
+  trunk.position.y = trunkH / 2;
+  trunk.castShadow = true;
+  g.add(trunk);
+
+  const canopyMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(0.92, 0.5, 0.5 + rng() * 0.15),
+    roughness: 0.7,
+    flatShading: true,
+  });
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(2 + rng() * 1.5, 7, 7), canopyMat);
+  canopy.position.y = trunkH + 1.5;
+  canopy.castShadow = true;
+  g.add(canopy);
+
+  const subMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(0.92, 0.4, 0.45 + rng() * 0.1),
+    roughness: 0.7,
+    flatShading: true,
+  });
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2 + rng() * 0.3;
+    const sub = new THREE.Mesh(new THREE.SphereGeometry(0.8 + rng() * 0.5, 6, 6), subMat);
+    sub.position.set(Math.cos(a) * 1.2, trunkH + 0.5 + rng() * 0.8, Math.sin(a) * 1.2);
+    g.add(sub);
+  }
+  return g;
+}
+
+function createSaguaro(rng) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color: 0x2A6B2A, roughness: 0.8, flatShading: true });
+  const h = 4 + rng() * 6;
+  const main = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, h, 6), mat);
+  main.position.y = h / 2;
+  main.castShadow = true;
+  g.add(main);
+
+  const arms = 1 + Math.floor(rng() * 2);
+  for (let i = 0; i < arms; i++) {
+    const side = i === 0 ? 1 : -1;
+    const ah = 1.5 + rng() * 2.5;
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, ah, 5), mat);
+    arm.position.set(side * 0.3, h * 0.5, (rng() - 0.5) * 0.3);
+    arm.rotation.z = side * 0.4;
+    arm.castShadow = true;
+    g.add(arm);
+  }
+  return g;
+}
+
+function createMushroomTree(rng) {
+  const g = new THREE.Group();
+  const h = 2 + rng() * 3;
+  const stemMat = new THREE.MeshStandardMaterial({ color: 0xE8E0D0, roughness: 0.8 });
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, h, 6), stemMat);
+  stem.position.y = h / 2;
+  g.add(stem);
+
+  const capMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(rng() * 0.1 + 0.05, 0.6, 0.3 + rng() * 0.2),
+    roughness: 0.7,
+    flatShading: true,
+  });
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.8 + rng() * 0.6, 6, 6), capMat);
+  cap.scale.set(1, 0.5, 1);
+  cap.position.y = h + 0.2;
+  cap.castShadow = true;
+  g.add(cap);
+
+  const dotMat = new THREE.MeshStandardMaterial({ color: 0xE8E8D0, roughness: 0.7 });
+  for (let i = 0; i < 3 + Math.floor(rng() * 3); i++) {
+    const a = rng() * Math.PI * 2;
+    const d = rng() * 0.5;
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), dotMat);
+    dot.position.set(Math.cos(a) * d, h + 0.3 + rng() * 0.3, Math.sin(a) * d);
+    g.add(dot);
   }
   return g;
 }

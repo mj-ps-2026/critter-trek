@@ -172,6 +172,9 @@ document.getElementById('biome-menu-close').addEventListener('click', () => {
 });
 
 // Use Clock despite deprecation warning - Timer needs extra update() calls
+const drinkBtn = document.getElementById('btn-drink');
+drinkBtn.addEventListener('click', () => { controls.drinkPressed = true; });
+
 const clock = new THREE.Clock();
 const infoEl = document.getElementById('info');
 
@@ -195,6 +198,7 @@ let foxLevel = 1;
 let foxXP = 0;
 let foxCurrentHP = BASE_HP;
 let combatCooldown = 0;
+let drinkCooldown = 0;
 
 function getMaxHP(level) { return Math.floor(BASE_HP + (level - 1) * HP_PER_LEVEL); }
 function getATK(level) { return BASE_ATK + (level - 1) * ATK_PER_LEVEL; }
@@ -522,7 +526,31 @@ function animate() {
 
       foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + REGEN_HP_PER_SEC * dt);
 
+      if (drinkCooldown > 0) drinkCooldown -= dt;
+      if (controls.drinkPressed) {
+        controls.drinkPressed = false;
+        if (drinkCooldown <= 0 && controls.isSwimming) {
+          const heal = 5 + Math.floor(Math.random() * 6);
+          foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + heal);
+          combat.nextAtkMult = 1.5;
+          drinkCooldown = 10;
+          infoEl.textContent = `💧 Drank water! +${heal} HP · Next attack empowered!`;
+          infoEl.style.background = 'rgba(50,100,200,0.7)';
+          setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+        } else if (drinkCooldown > 0) {
+          infoEl.textContent = `⏳ Not thirsty yet (${Math.ceil(drinkCooldown)}s)`;
+          infoEl.style.background = 'rgba(100,100,100,0.7)';
+          setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1000);
+        } else {
+          infoEl.textContent = '🌊 Must be in water to drink!';
+          infoEl.style.background = 'rgba(200,150,50,0.7)';
+          setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1500);
+        }
+      }
+
       controls.update(dt);
+
+      drinkBtn.style.display = controls.isSwimming && drinkCooldown <= 0 ? 'block' : 'none';
 
       sky.position.copy(camera.position);
       stars.position.copy(camera.position);
@@ -535,6 +563,12 @@ function animate() {
         let items = '';
         if (cnt.stick) items += ` 🪵${cnt.stick}`;
         if (cnt.rock) items += ` 🪨${cnt.rock}`;
+        if (cnt.sharpstick) items += ` 🗡️${cnt.sharpstick}`;
+        if (cnt.cactusneedle) items += ` 🌵${cnt.cactusneedle}`;
+        if (cnt.berry) items += ` 🫐${cnt.berry}`;
+        if (cnt.bone) items += ` 🦴${cnt.bone}`;
+        if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
+        if (cnt.herb) items += ` 🌿${cnt.herb}`;
         const maxHP = getMaxHP(foxLevel);
         const nextXP = xpForLevel(foxLevel);
         const bioInfo = chunkManager.getBiomeInfo(pos.x, pos.z);

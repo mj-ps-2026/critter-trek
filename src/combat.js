@@ -33,6 +33,7 @@ export class Combat {
     this.enemyMaxHP = 0;
     this.isPlayerDefending = false;
     this.isEnemyDefending = false;
+    this.nextAtkMult = null;
     this.anim = null;
     this.#grab();
   }
@@ -62,6 +63,9 @@ export class Combat {
     this.itemSharpStickCount = document.getElementById('item-sharpstick-count');
     this.itemCactusNeedleCount = document.getElementById('item-cactusneedle-count');
     this.itemHerbCount = document.getElementById('item-herb-count');
+    this.itemBerryCount = document.getElementById('item-berry-count');
+    this.itemBoneCount = document.getElementById('item-bone-count');
+    this.itemMushroomCount = document.getElementById('item-mushroom-count');
 
     document.getElementById('btn-attack').addEventListener('click', () => this.#showAttackTypes());
     document.getElementById('btn-defend').addEventListener('click', () => this.#doDefend());
@@ -76,6 +80,9 @@ export class Combat {
     document.getElementById('btn-item-sharpstick').addEventListener('click', () => this.#useItem('sharpstick'));
     document.getElementById('btn-item-cactusneedle').addEventListener('click', () => this.#useItem('cactusneedle'));
     document.getElementById('btn-item-herb').addEventListener('click', () => this.#useItem('herb'));
+    document.getElementById('btn-item-berry').addEventListener('click', () => this.#useItem('berry'));
+    document.getElementById('btn-item-bone').addEventListener('click', () => this.#useItem('bone'));
+    document.getElementById('btn-item-mushroom').addEventListener('click', () => this.#useItem('mushroom'));
     document.getElementById('btn-item-back').addEventListener('click', () => this.#showMainActions());
   }
 
@@ -202,6 +209,9 @@ export class Combat {
     this.itemSharpStickCount.textContent = counts.sharpstick;
     this.itemCactusNeedleCount.textContent = counts.cactusneedle;
     this.itemHerbCount.textContent = counts.herb;
+    this.itemBerryCount.textContent = counts.berry;
+    this.itemBoneCount.textContent = counts.bone;
+    this.itemMushroomCount.textContent = counts.mushroom;
     this.mainActions.style.display = 'none';
     this.attackTypes.style.display = 'none';
     this.itemTypes.style.display = 'flex';
@@ -256,7 +266,9 @@ export class Combat {
       if (Math.random() < atk.hitChance * hitMult) {
         const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
         const sizeMult = this.enemyScale < 1.0 ? (2 - this.enemyScale) : 1.0;
-        const dmg = Math.max(1, Math.floor(raw * dmgMult * sizeMult - this.enemyDEF));
+        const buffMult = this.nextAtkMult || 1.0;
+        this.nextAtkMult = null;
+        const dmg = Math.max(1, Math.floor(raw * dmgMult * sizeMult * buffMult - this.enemyDEF));
         this.enemyHP -= dmg;
         let msg = `Fox uses ${atk.name} for ${dmg} damage!`;
         if (wasDefending) msg += ' (enemy blocked some)';
@@ -354,11 +366,20 @@ export class Combat {
         return;
       }
 
+      if (item.category === 'buff') {
+        this.nextAtkMult = item.atkMult || 1.5;
+        this.#addLog(`Fox uses ${item.name} and feels empowered!`);
+        setTimeout(() => this.#enemyTurn(), 600);
+        return;
+      }
+
       this.#startAnim('fox', 'fast');
 
       const raw = item.minDmg + Math.random() * (item.maxDmg - item.minDmg);
       const sizeMult = this.enemyScale < 1.0 ? (2 - this.enemyScale) : 1.0;
-      const dmg = Math.max(1, Math.floor(raw * sizeMult - this.enemyDEF));
+      const buffMult = this.nextAtkMult || 1.0;
+      this.nextAtkMult = null;
+      const dmg = Math.max(1, Math.floor(raw * sizeMult * buffMult - this.enemyDEF));
       this.enemyHP -= dmg;
       this.#addLog(`Fox uses ${item.name} for ${dmg} damage!`);
       this.#updateHP();

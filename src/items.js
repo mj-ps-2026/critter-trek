@@ -6,6 +6,9 @@ const ITEM_DEFS = {
   sharpstick: { name: 'Sharp Stick', icon: '🗡️', minDmg: 4, maxDmg: 8, color: 0x6B3E1C, category: 'weapon' },
   cactusneedle: { name: 'Cactus Needle', icon: '🌵', minDmg: 3, maxDmg: 7, color: 0x3A7A2A, category: 'weapon' },
   herb: { name: 'Herb', icon: '🌿', minHeal: 6, maxHeal: 12, color: 0x5AAA3A, category: 'heal' },
+  berry: { name: 'Berry', icon: '🫐', minHeal: 3, maxHeal: 7, color: 0xAA3377, category: 'heal' },
+  bone: { name: 'Bone', icon: '🦴', minDmg: 5, maxDmg: 10, color: 0xE8DCC8, category: 'weapon' },
+  mushroom: { name: 'Mushroom', icon: '🍄', atkMult: 1.5, color: 0xCC4444, category: 'buff' },
 };
 
 class WorldItem {
@@ -45,6 +48,27 @@ class WorldItem {
         leaf.scale.set(1, 0.3, 1);
         this.group.add(leaf);
       }
+    } else if (this.type === 'berry') {
+      const berry = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 5), mat);
+      berry.position.y = 0.02;
+      this.group.add(berry);
+    } else if (this.type === 'bone') {
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.25, 5), mat);
+      mesh.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+      mesh.rotation.z = Math.random() * Math.PI;
+      mesh.position.y = 0.02;
+      this.group.add(mesh);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 5), mat);
+      knob.position.set(0, 0.02, 0.12);
+      this.group.add(knob);
+    } else if (this.type === 'mushroom') {
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.025, 0.06, 5), new THREE.MeshStandardMaterial({ color: 0xE8DCC8, roughness: 0.8 }));
+      stem.position.y = 0.03;
+      this.group.add(stem);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 5), mat);
+      cap.scale.set(1, 0.5, 1);
+      cap.position.y = 0.06;
+      this.group.add(cap);
     } else {
       const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07 + Math.random() * 0.04), mat);
       mesh.position.y = 0.04;
@@ -71,7 +95,7 @@ class ItemManager {
     this.getHeight = getHeight;
     this.getBiomeInfo = getBiomeInfo;
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0 };
   }
 
   #smoothstep(t, lo, hi) {
@@ -82,33 +106,43 @@ class ItemManager {
   #pickItemType(x, z) {
     if (!this.getBiomeInfo) {
       const r = Math.random();
-      if (r < 0.25) return 'stick';
-      if (r < 0.4) return 'sharpstick';
-      if (r < 0.65) return 'rock';
+      if (r < 0.2) return 'stick';
+      if (r < 0.35) return 'rock';
+      if (r < 0.5) return 'berry';
+      if (r < 0.6) return 'sharpstick';
+      if (r < 0.7) return 'bone';
       if (r < 0.8) return 'cactusneedle';
-      return 'herb';
+      if (r < 0.9) return 'herb';
+      return 'mushroom';
     }
     const bio = this.getBiomeInfo(x, z);
     const forest = this.#smoothstep(bio.temp, 0, 0.3) * this.#smoothstep(bio.moist, 0.2, 0.5) * (1 - bio.mountain * 0.3);
     const desert = this.#smoothstep(bio.temp, 0.12, 0.42) * (1 - this.#smoothstep(bio.moist, -0.2, 0.1)) * (1 - bio.mountain * 0.4);
     const r = Math.random();
     if (desert > 0.3) {
-      if (r < 0.3) return 'rock';
-      if (r < 0.6) return 'cactusneedle';
-      if (r < 0.8) return 'stick';
-      return 'sharpstick';
+      if (r < 0.25) return 'rock';
+      if (r < 0.45) return 'cactusneedle';
+      if (r < 0.55) return 'bone';
+      if (r < 0.7) return 'stick';
+      if (r < 0.85) return 'sharpstick';
+      return 'mushroom';
     }
     if (forest > 0.3) {
-      if (r < 0.3) return 'stick';
-      if (r < 0.5) return 'sharpstick';
-      if (r < 0.7) return 'herb';
+      if (r < 0.2) return 'stick';
+      if (r < 0.35) return 'sharpstick';
+      if (r < 0.5) return 'herb';
+      if (r < 0.6) return 'berry';
+      if (r < 0.7) return 'mushroom';
       if (r < 0.85) return 'rock';
-      return 'cactusneedle';
+      return 'bone';
     }
-    if (r < 0.25) return 'stick';
-    if (r < 0.4) return 'sharpstick';
-    if (r < 0.65) return 'rock';
-    if (r < 0.8) return 'herb';
+    if (r < 0.18) return 'stick';
+    if (r < 0.32) return 'rock';
+    if (r < 0.46) return 'berry';
+    if (r < 0.56) return 'sharpstick';
+    if (r < 0.66) return 'bone';
+    if (r < 0.76) return 'mushroom';
+    if (r < 0.86) return 'herb';
     return 'cactusneedle';
   }
 
@@ -122,7 +156,7 @@ class ItemManager {
     });
 
     let attempts = 0;
-    while (this.items.length < 20 && attempts < 200) {
+    while (this.items.length < 35 && attempts < 300) {
       attempts++;
       const a = Math.random() * Math.PI * 2;
       const r = 8 + Math.random() * 25;
@@ -164,7 +198,7 @@ class ItemManager {
   clearAll() {
     for (const item of this.items) item.removeFrom(this.scene);
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0 };
   }
 }
 
