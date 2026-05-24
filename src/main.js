@@ -117,7 +117,7 @@ scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
 console.log('[main.js] Step: fauna / items');
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
-const itemManager = new ItemManager(scene, chunkManager.getHeight);
+const itemManager = new ItemManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 
 console.log('[main.js] Step: animal creation and spawn');
 const animal = new Animal();
@@ -176,6 +176,7 @@ const clock = new THREE.Clock();
 const infoEl = document.getElementById('info');
 
 let dayTime = Math.PI * 0.6;
+let dayFactor = 1;
 const dayLength = 90;
 
 // ── Fox progression ──
@@ -316,7 +317,7 @@ function updateDayNight(dt, foxPos) {
   const moonY = Math.sin(moonAngle) * 50 + 8;
 
   const heightFactor = (sunY + 20) / 78;
-  const dayFactor = Math.max(0, Math.min(1, heightFactor));
+  dayFactor = Math.max(0, Math.min(1, heightFactor));
 
   const moonHeightFactor = (moonY + 20) / 78;
   const moonFactor = Math.max(0, Math.min(1, moonHeightFactor));
@@ -380,37 +381,64 @@ function spawnWolf() {
 }
 
 function getBiomeName(bio) {
-  const { temp, moist, mountain, magic } = bio;
+  const { continent, temp, moist, magic, land, mountain } = bio;
   if (mountain > 0.5) return 'mountain';
-  if (magic > 0.4) return 'crystal';
-  if (temp > 0.3 && moist < 0) return 'desert';
-  if (temp < -0.1) return 'tundra';
-  if (moist > 0.3 && temp > 0) return 'forest';
-  if (moist < -0.1) return 'swamp';
+
+  const smoothstep = (t, lo, hi) => {
+    t = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
+    return t * t * (3 - 2 * t);
+  };
+
+  const desert = smoothstep(temp, 0.15, 0.45) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain * 0.4);
+  const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain * 0.3);
+  const tundra = (1 - smoothstep(temp, -0.35, 0)) * (1 - mountain);
+  const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
+  const crystal = smoothstep(magic, 0.45, 0.7) * land;
+  const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
+  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
+
+  if (crystal > 0.3) return 'crystal';
+  if (canyon > 0.2) return 'canyon';
+  if (desert > 0.2) return 'desert';
+  if (swamp > 0.3) return 'swamp';
+  if (tundra > 0.3) return 'tundra';
+  if (forest > 0.3) return 'forest';
+  if (badlands > 0.15) return 'badlands';
   return 'plains';
 }
 
 function teleportToBiome(biomeName) {
   const pos = animal.group.position;
-  for (let attempt = 0; attempt < 2000; attempt++) {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 10 + Math.random() * 500;
-    const x = pos.x + Math.cos(angle) * dist;
-    const z = pos.z + Math.sin(angle) * dist;
-    const bio = chunkManager.getBiomeInfo(x, z);
-    if (getBiomeName(bio) === biomeName) {
-      const y = chunkManager.getHeight(x, z);
-      if (y > 0.3) {
-        animal.group.position.set(x, y, z);
-        chunkManager.lastCX = null;
-        chunkManager.lastCZ = null;
-        infoEl.textContent = `Teleported to ${biomeName}`;
-        infoEl.style.background = 'rgba(50,150,255,0.7)';
-        setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
-        return true;
+
+  const rounds = [
+    { maxDist: 500, attempts: 2000 },
+    { maxDist: 3000, attempts: 3000 },
+    { maxDist: 20000, attempts: 5000 },
+    { maxDist: 100000, attempts: 10000 },
+  ];
+
+  for (const round of rounds) {
+    for (let attempt = 0; attempt < round.attempts; attempt++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 10 + Math.random() * round.maxDist;
+      const x = pos.x + Math.cos(angle) * dist;
+      const z = pos.z + Math.sin(angle) * dist;
+      const bio = chunkManager.getBiomeInfo(x, z);
+      if (getBiomeName(bio) === biomeName) {
+        const y = chunkManager.getHeight(x, z);
+        if (y > 0.3) {
+          animal.group.position.set(x, y, z);
+          chunkManager.lastCX = null;
+          chunkManager.lastCZ = null;
+          infoEl.textContent = `Teleported to ${biomeName}`;
+          infoEl.style.background = 'rgba(50,150,255,0.7)';
+          setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+          return true;
+        }
       }
     }
   }
+
   infoEl.textContent = `Could not find ${biomeName} nearby`;
   infoEl.style.background = 'rgba(200,50,50,0.7)';
   setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
@@ -453,16 +481,17 @@ function animate() {
         spawnWolf();
       }
 
-      if (combatCooldown <= 0) {
+      if (combatCooldown <= 0 && dayFactor > 0.3) {
+      const scaleLvl = 1 + (foxLevel - 1) * 0.15;
       for (const wolf of wolves) {
-        const result = wolf.update(dt, pos);
+        const result = wolf.update(dt, pos, dayFactor > 0.3);
         if (result === 'attacking') {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
           const td = wolf.typeDef;
           combat.start({
-            hp: td.hp, atk: td.atk, def: td.def,
-            displayName: td.name, icon: td.icon,
+            hp: Math.floor(td.hp * scaleLvl), atk: Math.floor(td.atk * scaleLvl), def: Math.floor(td.def * scaleLvl),
+            displayName: td.name, icon: td.icon, scale: td.scale,
             removeFrom: (s) => {
               wolf.removeFrom(s);
               const idx = wolves.indexOf(wolf);
@@ -479,7 +508,7 @@ function animate() {
           biomeMenu.style.display = 'none';
           const creature = faunaAnimal;
           combat.start({
-            hp: creature.hp, atk: creature.atk, def: creature.def,
+            hp: Math.floor(creature.hp * scaleLvl), atk: Math.floor(creature.atk * scaleLvl), def: Math.floor(creature.def * scaleLvl),
             displayName: creature.displayName, icon: creature.icon,
             removeFrom: (s) => {
               creature.removeFrom(s);
@@ -508,7 +537,9 @@ function animate() {
         if (cnt.rock) items += ` 🪨${cnt.rock}`;
         const maxHP = getMaxHP(foxLevel);
         const nextXP = xpForLevel(foxLevel);
-        infoEl.textContent = `Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP} · WASD · Shift sprint · A/D turn · F super` + items;
+        const bioInfo = chunkManager.getBiomeInfo(pos.x, pos.z);
+        const biomeName = getBiomeName(bioInfo);
+        infoEl.textContent = `${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP} · WASD · Shift sprint · A/D turn · F super` + items;
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }
       break;

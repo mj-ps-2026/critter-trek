@@ -31,6 +31,14 @@ class FaunaAnimal {
       case 'lizard': this.speed = 3.5; this.fleeDist = 8; this.roamRadius = 8; this.hp = 4; this.atk = 1; this.def = 0; this.displayName = 'Lizard'; this.icon = '🦎'; break;
       case 'bear':   this.speed = 2.5; this.fleeDist = 16; this.roamRadius = 20; this.hp = 18; this.atk = 6; this.def = 2; this.displayName = 'Bear'; this.icon = '🐻'; break;
       case 'arcticfox': this.speed = 4; this.fleeDist = 14; this.roamRadius = 18; this.hp = 6; this.atk = 3; this.def = 1; this.displayName = 'Arctic Fox'; this.icon = '🦊'; break;
+      case 'frog':    this.speed = 3; this.fleeDist = 6; this.roamRadius = 6; this.hp = 2; this.atk = 1; this.def = 0; this.displayName = 'Frog'; this.icon = '🐸'; break;
+      case 'glowbug': this.speed = 3.5; this.fleeDist = 5; this.roamRadius = 8; this.hp = 1; this.atk = 1; this.def = 0; this.displayName = 'Glowbug'; this.icon = '✨'; break;
+      case 'goat':    this.speed = 3.5; this.fleeDist = 18; this.roamRadius = 22; this.hp = 10; this.atk = 4; this.def = 2; this.displayName = 'Mountain Goat'; this.icon = '🐐'; break;
+      case 'snake':   this.speed = 2.5; this.fleeDist = 10; this.roamRadius = 10; this.hp = 3; this.atk = 2; this.def = 0; this.displayName = 'Rattlesnake'; this.icon = '🐍'; break;
+      case 'owl':     this.speed = 3; this.fleeDist = 12; this.roamRadius = 15; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Owl'; this.icon = '🦉'; break;
+      case 'bison':   this.speed = 3; this.fleeDist = 15; this.roamRadius = 20; this.hp = 20; this.atk = 5; this.def = 3; this.displayName = 'Bison'; this.icon = '🦬'; break;
+      case 'heron':   this.speed = 3; this.fleeDist = 15; this.roamRadius = 12; this.hp = 4; this.atk = 2; this.def = 0; this.displayName = 'Heron'; this.icon = '🦩'; break;
+      case 'jackrabbit': this.speed = 6; this.fleeDist = 12; this.roamRadius = 12; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Jackrabbit'; this.icon = '🐇'; break;
     }
 
     this.group.position.set(position.x, getHeight(position.x, position.z), position.z);
@@ -44,6 +52,14 @@ class FaunaAnimal {
       case 'lizard': this.#buildLizard(); break;
       case 'bear':   this.#buildBear(); break;
       case 'arcticfox': this.#buildArcticFox(); break;
+      case 'frog':    this.#buildFrog(); break;
+      case 'glowbug': this.#buildGlowbug(); break;
+      case 'goat':    this.#buildGoat(); break;
+      case 'snake':   this.#buildSnake(); break;
+      case 'owl':     this.#buildOwl(); break;
+      case 'bison':   this.#buildBison(); break;
+      case 'heron':   this.#buildHeron(); break;
+      case 'jackrabbit': this.#buildJackrabbit(); break;
     }
   }
 
@@ -230,6 +246,325 @@ class FaunaAnimal {
     g.add(tail);
   }
 
+  #buildFrog() {
+    const g = this.group;
+    const green = 0x4CAF50, light = 0x81C784, dark = 0x2E7D32, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 6), mat(green));
+    body.scale.set(1, 0.6, 1.4);
+    body.position.y = 0.12;
+    g.add(body);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), mat(green));
+    head.position.set(0, 0.18, -0.28);
+    head.scale.set(1, 0.7, 0.8);
+    g.add(head);
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), mat(green));
+      eye.position.set(s * 0.1, 0.28, -0.3);
+      g.add(eye);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
+      pupil.position.set(s * 0.1, 0.29, -0.33);
+      g.add(pupil);
+    }
+
+    for (const s of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.055, 0.15, 4), mat(dark));
+      leg.position.set(s * 0.15, 0.02, 0.14);
+      leg.rotation.x = 0.5;
+      g.add(leg);
+    }
+
+    for (const s of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 4), mat(dark));
+      leg.position.set(s * 0.09, 0.02, -0.14);
+      g.add(leg);
+    }
+  }
+
+  #buildGlowbug() {
+    const g = this.group;
+    const hue = Math.random() * 0.3 + 0.7;
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(hue, 0.7, 0.4),
+      emissive: new THREE.Color().setHSL(hue, 0.6, 0.2),
+      emissiveIntensity: 0.5,
+      roughness: 0.3,
+      metalness: 0.2,
+      flatShading: true,
+    });
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 5), bodyMat);
+    body.position.y = 0.08;
+    g.add(body);
+
+    for (const s of [-1, 1]) {
+      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.06, 4), new THREE.MeshStandardMaterial({
+        color: new THREE.Color().setHSL(hue, 0.3, 0.6),
+        transparent: true, opacity: 0.5, flatShading: true,
+      }));
+      wing.position.set(s * 0.1, 0.1, 0);
+      wing.rotation.z = s * 0.3;
+      g.add(wing);
+    }
+
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 5), new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(hue, 0.8, 0.6),
+      emissive: new THREE.Color().setHSL(hue, 0.8, 0.4),
+      emissiveIntensity: 0.8,
+      flatShading: true,
+    }));
+    glow.position.set(0, 0.12, -0.08);
+    g.add(glow);
+  }
+
+  #buildGoat() {
+    const g = this.group;
+    const fur = 0xC8C0B0, dark = 0x6A6050, horn = 0x4A3A2A, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.9), mat(fur));
+    body.position.y = 0.4;
+    body.castShadow = true;
+    g.add(body);
+
+    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.25, 0.15), mat(fur));
+    neck.position.set(0, 0.6, -0.4);
+    g.add(neck);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.22, 0.3), mat(fur));
+    head.position.set(0, 0.72, -0.55);
+    g.add(head);
+
+    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 4), mat(dark));
+    beard.position.set(0, 0.58, -0.65);
+    beard.rotation.x = 0.3;
+    g.add(beard);
+
+    for (const s of [-1, 1]) {
+      const horn = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.045, 0.3, 4), mat(horn));
+      horn.position.set(s * 0.1, 0.88, -0.48);
+      horn.rotation.z = s * 0.3;
+      horn.rotation.x = -0.4;
+      g.add(horn);
+    }
+
+    for (const [x, z] of [[0.2, 0.3], [-0.2, 0.3], [0.2, -0.3], [-0.2, -0.3]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.3, 4), mat(dark));
+      leg.position.set(x, 0.15, z);
+      g.add(leg);
+    }
+
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), mat(fur));
+    tail.position.set(0, 0.5, 0.5);
+    g.add(tail);
+  }
+
+  #buildSnake() {
+    const g = this.group;
+    const tan = 0xC4A46A, pattern = 0x8B6B3A, dark = 0x5A3A1A, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.06, 0.5, 5), mat(tan));
+    body.position.y = 0.03;
+    body.rotation.x = 0.2;
+    g.add(body);
+
+    const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.3, 5), mat(pattern));
+    mid.position.set(0, 0.02, 0.35);
+    mid.rotation.x = -0.1;
+    g.add(mid);
+
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.15, 5), mat(pattern));
+    tail.position.set(0, 0.02, 0.52);
+    tail.rotation.x = 0.3;
+    g.add(tail);
+
+    const rattle = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.04, 4), mat(dark));
+    rattle.position.set(0, 0.04, 0.6);
+    g.add(rattle);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.08), mat(tan));
+    head.position.set(0, 0.04, -0.28);
+    g.add(head);
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(black));
+      eye.position.set(s * 0.025, 0.05, -0.29);
+      g.add(eye);
+    }
+  }
+
+  #buildOwl() {
+    const g = this.group;
+    const brown = 0x6A4A2A, light = 0xC8B08A, dark = 0x3A2A1A, yellow = 0xDDCC44, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 6), mat(brown));
+    body.scale.set(1, 0.85, 0.9);
+    body.position.y = 0.35;
+    g.add(body);
+
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.14, 5, 5), mat(light));
+    belly.scale.set(0.8, 0.7, 0.5);
+    belly.position.set(0, 0.3, -0.12);
+    g.add(belly);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), mat(brown));
+    head.position.set(0, 0.55, -0.15);
+    g.add(head);
+
+    for (const s of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 4), mat(dark));
+      ear.position.set(s * 0.07, 0.66, -0.15);
+      ear.rotation.z = s * 0.3;
+      g.add(ear);
+    }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), mat(yellow));
+      eye.position.set(s * 0.06, 0.56, -0.24);
+      g.add(eye);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
+      pupil.position.set(s * 0.06, 0.56, -0.26);
+      g.add(pupil);
+    }
+
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.06, 4), mat(yellow));
+    beak.position.set(0, 0.53, -0.28);
+    beak.rotation.x = 0.3;
+    g.add(beak);
+
+    for (const s of [-1, 1]) {
+      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.08, 4), mat(dark));
+      wing.position.set(s * 0.22, 0.32, 0);
+      wing.rotation.z = s * 0.6;
+      g.add(wing);
+    }
+  }
+
+  #buildBison() {
+    const g = this.group;
+    const brown = 0x4A3020, dark = 0x2A1A10, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 1.6), mat(brown));
+    body.position.y = 0.6;
+    body.castShadow = true;
+    g.add(body);
+
+    const hump = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.35, 0.5), mat(dark));
+    hump.position.set(0, 0.85, -0.2);
+    g.add(hump);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.5), mat(brown));
+    head.position.set(0, 0.7, -1.0);
+    head.castShadow = true;
+    g.add(head);
+
+    for (const s of [-1, 1]) {
+      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 4), mat(black));
+      horn.position.set(s * 0.15, 0.85, -0.95);
+      horn.rotation.z = s * 0.4;
+      g.add(horn);
+    }
+
+    for (const [x, z] of [[0.4, 0.6], [-0.4, 0.6], [0.4, -0.6], [-0.4, -0.6]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.45, 5), mat(dark));
+      leg.position.set(x, 0.22, z);
+      g.add(leg);
+    }
+
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.25, 4), mat(dark));
+    tail.position.set(0, 0.6, 0.85);
+    tail.rotation.x = 0.4;
+    g.add(tail);
+
+    const tuft = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), mat(dark));
+    tuft.position.set(0, 0.65, 0.95);
+    g.add(tuft);
+  }
+
+  #buildHeron() {
+    const g = this.group;
+    const white = 0xE8E0D0, dark = 0x4A3A2A, orange = 0xDD6622, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), mat(white));
+    body.scale.set(1, 0.8, 1.3);
+    body.position.y = 0.5;
+    g.add(body);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.35, 5), mat(white));
+    neck.position.set(0, 0.75, -0.2);
+    g.add(neck);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 5), mat(white));
+    head.position.set(0, 0.95, -0.3);
+    g.add(head);
+
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.15, 4), mat(orange));
+    beak.position.set(0, 0.94, -0.4);
+    beak.rotation.x = 0.2;
+    g.add(beak);
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(black));
+      eye.position.set(s * 0.025, 0.96, -0.32);
+      g.add(eye);
+    }
+
+    for (const [x, z] of [[0.06, 0.22], [-0.06, 0.22]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.4, 4), mat(orange));
+      leg.position.set(x, 0.2, z);
+      g.add(leg);
+    }
+
+    for (const s of [-1, 1]) {
+      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.06, 4), mat(0xC8C0B0));
+      wing.position.set(s * 0.18, 0.5, 0);
+      wing.rotation.z = s * 0.5;
+      g.add(wing);
+    }
+  }
+
+  #buildJackrabbit() {
+    const g = this.group;
+    const tan = 0xC4A46A, light = 0xE8D8B8, dark = 0x8A6A3A, black = 0x111111;
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 6), mat(tan));
+    body.scale.set(1.2, 0.9, 1.1);
+    body.position.y = 0.25;
+    g.add(body);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), mat(tan));
+    head.position.set(0, 0.38, -0.28);
+    g.add(head);
+
+    for (const s of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.3, 4), mat(tan));
+      ear.position.set(s * 0.08, 0.6, -0.22);
+      ear.rotation.z = s * 0.2;
+      g.add(ear);
+      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), mat(light));
+      inner.position.set(s * 0.08, 0.55, -0.22);
+      inner.rotation.z = s * 0.2;
+      g.add(inner);
+    }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
+      eye.position.set(s * 0.07, 0.4, -0.34);
+      g.add(eye);
+    }
+
+    for (const [x, z] of [[0.1, 0.12], [-0.1, 0.12], [0.14, -0.12], [-0.14, -0.12]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.18, 4), mat(dark));
+      leg.position.set(x, 0.09, z);
+      g.add(leg);
+    }
+
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), mat(light));
+    tail.position.set(0, 0.22, 0.28);
+    g.add(tail);
+  }
+
   update(dt, foxPos) {
     this.clock += dt;
     const dist = this.group.position.distanceTo(foxPos);
@@ -347,20 +682,28 @@ export class FaunaManager {
   }
 
   #pickType(bio) {
-    const { temp, moist, mountain } = bio;
+    const { temp, moist, mountain, magic, continent, land } = bio;
     const desert = smoothstep(temp, 0.12, 0.42) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain);
     const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain * 0.3);
     const tundra = 1 - smoothstep(temp, -0.35, 0);
-    const plains = Math.max(0, 1 - desert - forest - tundra - mountain) * 0.5;
+    const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
+    const crystal = smoothstep(magic, 0.45, 0.7) * land;
+    const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
+    const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
+    const plains = Math.max(0, 1 - desert - forest - tundra - swamp - crystal - canyon - badlands - mountain) * 0.5;
 
     const r = Math.random();
-    if (desert > 0.3) return r < 0.7 ? 'lizard' : 'rabbit';
+    if (crystal > 0.3) return r < 0.6 ? 'glowbug' : 'deer';
+    if (swamp > 0.3) return r < 0.5 ? 'frog' : r < 0.75 ? 'heron' : r < 0.9 ? 'deer' : 'bear';
+    if (canyon > 0.2) return r < 0.6 ? 'goat' : 'rabbit';
+    if (badlands > 0.2) return r < 0.6 ? 'snake' : r < 0.85 ? 'lizard' : 'rabbit';
+    if (desert > 0.3) return r < 0.5 ? 'lizard' : r < 0.8 ? 'jackrabbit' : 'rabbit';
     if (tundra > 0.3) return r < 0.45 ? 'arcticfox' : r < 0.75 ? 'rabbit' : r < 0.9 ? 'deer' : 'bear';
     if (forest > 0.3) {
-      return r < 0.4 ? 'deer' : r < 0.7 ? 'rabbit' : 'bear';
+      return r < 0.3 ? 'deer' : r < 0.55 ? 'rabbit' : r < 0.75 ? 'owl' : 'bear';
     }
     if (plains > 0.15 || (mountain > 0.3 && mountain < 0.7)) {
-      return r < 0.5 ? 'deer' : r < 0.8 ? 'rabbit' : 'lizard';
+      return r < 0.4 ? 'bison' : r < 0.65 ? 'deer' : r < 0.85 ? 'rabbit' : 'lizard';
     }
     return r < 0.5 ? 'rabbit' : r < 0.75 ? 'deer' : null;
   }

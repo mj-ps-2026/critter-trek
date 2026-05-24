@@ -49,6 +49,14 @@ const ENEMY_TYPES = {
     detectionRange: 30, attackRange: 2.5,
     biomes: ['crystal'], weight: 1,
   },
+  vulture: {
+    id: 'vulture', name: 'Vulture', icon: '🦅',
+    hp: 8, atk: 4, def: 1,
+    bodyColor: 0x3A2A1A, darkColor: 0x1A0A00, accentColor: 0xCC3322,
+    scale: 0.8, speed: 2.5, patrolSpeed: 1.5, chaseSpeed: 3.5,
+    detectionRange: 28, attackRange: 1.5,
+    biomes: ['canyon'], weight: 3,
+  },
   boar: {
     id: 'boar', name: 'Wild Boar', icon: '🐗',
     hp: 14, atk: 5, def: 2,
@@ -81,6 +89,14 @@ const ENEMY_TYPES = {
     detectionRange: 24, attackRange: 2.0,
     biomes: ['cave'], weight: 2,
   },
+  anaconda: {
+    id: 'anaconda', name: 'Green Anaconda', icon: '🐍',
+    hp: 14, atk: 5, def: 1,
+    bodyColor: 0x3A7A2A, darkColor: 0x1A4A1A, accentColor: 0x5AAA3A,
+    scale: 1.0, speed: 2.0, patrolSpeed: 0.8, chaseSpeed: 2.5,
+    detectionRange: 18, attackRange: 1.6,
+    biomes: ['forest'], weight: 2,
+  },
 };
 
 const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, flatShading: true });
@@ -111,8 +127,8 @@ export class Wolf {
     const t = this.typeDef;
     const bc = t.bodyColor, dc = t.darkColor, ac = t.accentColor;
 
-    const bodyH = t.id === 'yeti' ? 0.50 : t.id === 'croc' ? 0.20 : 0.35;
-    const bodyL = t.id === 'croc' ? 1.6 : 1.1;
+    const bodyH = t.id === 'yeti' ? 0.50 : t.id === 'croc' ? 0.20 : t.id === 'anaconda' ? 0.15 : 0.35;
+    const bodyL = t.id === 'croc' ? 1.6 : t.id === 'anaconda' ? 2.0 : 1.1;
     const bodyY = bodyH / 2;
 
     this.body = new THREE.Mesh(new THREE.BoxGeometry(0.8, bodyH, bodyL), mat(bc));
@@ -120,9 +136,9 @@ export class Wolf {
     this.body.castShadow = true;
     this.group.add(this.body);
 
-    const headH = t.id === 'yeti' ? 0.26 : 0.22;
-    const headW = t.id === 'croc' ? 0.5 : 0.35;
-    const headL = t.id === 'croc' ? 0.45 : 0.35;
+    const headH = t.id === 'yeti' ? 0.26 : t.id === 'anaconda' ? 0.15 : 0.22;
+    const headW = t.id === 'croc' ? 0.5 : t.id === 'anaconda' ? 0.28 : 0.35;
+    const headL = t.id === 'croc' ? 0.45 : t.id === 'anaconda' ? 0.3 : 0.35;
     this.head = new THREE.Mesh(new THREE.BoxGeometry(headW, headH, headL), mat(bc));
     this.head.position.set(0, bodyY + 0.2, -bodyL * 0.5 - 0.08);
     this.head.castShadow = true;
@@ -134,7 +150,7 @@ export class Wolf {
     snout.position.set(0, bodyY + 0.15, -bodyL * 0.5 - 0.22);
     this.group.add(snout);
 
-    if (t.id !== 'golem') {
+    if (t.id !== 'golem' && t.id !== 'anaconda') {
       for (const s of [-1, 1]) {
         const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 4), mat(dc));
         ear.position.set(s * 0.12, bodyY + 0.33, -bodyL * 0.5 - 0.02);
@@ -161,10 +177,21 @@ export class Wolf {
     }
 
     this.legs = [];
-    const legZ = bodyL * 0.36;
-    const legX = 0.25;
-    const legH = t.id === 'croc' ? 0.12 : t.id === 'yeti' ? 0.35 : 0.28;
-    const legY = (t.id === 'croc' ? 0.06 : t.id === 'yeti' ? 0.17 : 0.17) - legH / 2;
+    if (t.id === 'anaconda') {
+      for (const lp of [{ x: 0.06, z: 0.4 }, { x: -0.06, z: 0.4 }, { x: 0.06, z: -0.35 }, { x: -0.06, z: -0.35 }]) {
+        const legGroup = new THREE.Group();
+        legGroup.position.set(lp.x, 0, lp.z);
+        const legMesh = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.04), mat(dc));
+        legMesh.position.y = 0;
+        legGroup.add(legMesh);
+        this.group.add(legGroup);
+        this.legs.push(legGroup);
+      }
+    } else {
+      const legZ = bodyL * 0.36;
+      const legX = 0.25;
+      const legH = t.id === 'croc' ? 0.12 : t.id === 'yeti' ? 0.35 : 0.28;
+      const legY = (t.id === 'croc' ? 0.06 : t.id === 'yeti' ? 0.17 : 0.17) - legH / 2;
     const legPositions = [
       { x: legX, z: legZ }, { x: -legX, z: legZ },
       { x: legX, z: -legZ }, { x: -legX, z: -legZ },
@@ -178,6 +205,7 @@ export class Wolf {
       this.group.add(legGroup);
       this.legs.push(legGroup);
     }
+    }
 
     if (t.id === 'scorpion') {
       const stinger = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 6), mat(ac));
@@ -188,6 +216,16 @@ export class Wolf {
       seg.position.set(0, 0.05, bodyL * 0.5 + 0.05);
       seg.rotation.x = 0.3;
       this.group.add(seg);
+    }
+
+    if (t.id === 'anaconda') {
+      for (let i = 0; i < 3; i++) {
+        const r = 0.09 - i * 0.02;
+        const seg = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, 0.25, 5), mat(t.id === 'anaconda' ? dc : bc));
+        seg.position.set(0, 0.07, bodyL * 0.5 + 0.1 + i * 0.2);
+        seg.rotation.x = 0.2 + i * 0.1;
+        this.group.add(seg);
+      }
     }
 
     if (t.id === 'croc') {
@@ -214,6 +252,19 @@ export class Wolf {
         wing.position.set(s * 0.3, 0.1, 0);
         this.group.add(wing);
       }
+    }
+
+    if (t.id === 'vulture') {
+      for (const s of [-1, 1]) {
+        const wing = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.5, 4), mat(dc));
+        wing.rotation.z = s * 0.5;
+        wing.rotation.x = 0.2;
+        wing.position.set(s * 0.35, bodyY + 0.05, 0);
+        this.group.add(wing);
+      }
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 5), mat(ac));
+      head.position.set(0, bodyY + 0.35, -bodyL * 0.5 - 0.12);
+      this.group.add(head);
     }
 
     if (t.id === 'spider') {
@@ -247,7 +298,7 @@ export class Wolf {
     }
 
     this.tail = new THREE.Group();
-    if (t.id !== 'scorpion' && t.id !== 'croc' && t.id !== 'golem') {
+    if (t.id !== 'scorpion' && t.id !== 'croc' && t.id !== 'golem' && t.id !== 'anaconda') {
       this.tail.position.set(0, bodyY + 0.05, bodyL * 0.5 + 0.05);
       const tailMesh = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.3, 6), mat(bc));
       tailMesh.position.y = 0.15;
@@ -261,20 +312,26 @@ export class Wolf {
     }
   }
 
-  update(dt, foxPos) {
+  update(dt, foxPos, hostile = true) {
     if (this.dead) return;
     this.clock += dt;
+    if (!hostile && this.state === 'CHASE') {
+      this.state = 'PATROL';
+      this.targetPos = null;
+    }
     switch (this.state) {
-      case 'PATROL': return this.#patrol(dt, foxPos);
+      case 'PATROL': return this.#patrol(dt, foxPos, hostile);
       case 'CHASE': return this.#chase(dt, foxPos);
     }
   }
 
-  #patrol(dt, foxPos) {
-    const dist = this.group.position.distanceTo(foxPos);
-    if (dist < this.detectionRange) {
-      this.state = 'CHASE';
-      return 'chasing';
+  #patrol(dt, foxPos, hostile) {
+    if (hostile) {
+      const dist = this.group.position.distanceTo(foxPos);
+      if (dist < this.detectionRange) {
+        this.state = 'CHASE';
+        return 'chasing';
+      }
     }
     if (!this.targetPos || this.group.position.distanceTo(this.targetPos) < 1.5) {
       this.waitTimer -= dt;
@@ -334,8 +391,8 @@ export class Wolf {
       this.legs[3].rotation.x = Math.sin(phase) * 0.4;
     }
     const bob = moving ? Math.sin(phase * 2) * 0.02 : 0;
-    if (this.body) this.body.position.y = (this.typeDef.id === 'croc' ? 0.1 : this.typeDef.id === 'yeti' ? 0.25 : 0.175) + bob;
-    if (this.head) this.head.position.y = (this.body ? this.body.position.y : 0) + 0.2 + bob * 0.8;
+    if (this.body) this.body.position.y = (this.typeDef.id === 'croc' ? 0.1 : this.typeDef.id === 'yeti' ? 0.25 : this.typeDef.id === 'anaconda' ? 0.075 : 0.175) + bob;
+    if (this.head) this.head.position.y = (this.body ? this.body.position.y : 0) + (this.typeDef.id === 'anaconda' ? 0.12 : 0.2) + bob * 0.8;
   }
 
   getPosition() { return this.group.position; }
@@ -360,13 +417,15 @@ function smoothstep(t, lo, hi) {
 
 export function pickEnemyType(getBiomeInfo, x, z) {
   const bio = getBiomeInfo(x, z);
-  const { temp, moist, mountain } = bio;
+  const { temp, moist, mountain, magic, continent, land } = bio;
   const desert = smoothstep(temp, 0.15, 0.45) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain);
   const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain);
   const tundra = 1 - smoothstep(temp, -0.35, 0);
   const swamp = smoothstep(temp, 0.1, 0.35) * smoothstep(moist, 0.4, 0.7) * (1 - mountain);
-  const crystal = bio.magic ? Math.max(0, (bio.magic - 0.3) * 2) : 0;
+  const crystal = magic ? Math.max(0, (magic - 0.3) * 2) : 0;
   const mountains = mountain;
+  const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
+  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
 
   const weights = {};
   weights.desert = desert;
@@ -375,8 +434,9 @@ export function pickEnemyType(getBiomeInfo, x, z) {
   weights.swamp = swamp;
   weights.crystal = crystal;
   weights.mountains = mountains;
-  weights.plains = Math.max(0, 1 - desert - forest - tundra - swamp - crystal - mountains);
-  weights.badlands = desert * mountain * 0.5;
+  weights.canyon = canyon;
+  weights.plains = Math.max(0, 1 - desert - forest - tundra - swamp - crystal - canyon - badlands - mountains);
+  weights.badlands = badlands;
 
   const candidates = [];
   for (const def of Object.values(ENEMY_TYPES)) {
