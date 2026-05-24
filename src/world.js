@@ -18,51 +18,52 @@ export class ChunkManager {
     this.cacheMaxSize = 200;
     this.lastCX = null;
     this.lastCZ = null;
-    this.renderDist = 3;
+    this.renderDist = 4;
 
     const n = new Noise(seed * 7 + 13);
     const n2 = new Noise(seed * 31 + 7);
 
     this.getHeight = (x, z) => {
-      const continent = n.noise2D(x * 0.0014, z * 0.0014);
-      const temp = n.noise2D(x * 0.003, z * 0.003);
-      const moist = n.noise2D(x * 0.0035, z * 0.0035);
-      const magic = n2.noise2D(x * 0.0025, z * 0.0025);
+      const continent = n.noise2D(x * 0.0007, z * 0.0007);
+      const temp = n.noise2D(x * 0.0008, z * 0.0008);
+      const moist = n.noise2D(x * 0.0009, z * 0.0009);
+      const magic = n2.noise2D(x * 0.0007, z * 0.0007);
 
-      const land = smoothstep(continent, -0.3, 0.05);
-      const mountain = smoothstep(continent, 0.2, 0.65);
+      const land = smoothstep(continent, -0.35, 0.05);
+      const mountain = smoothstep(continent, 0.15, 0.55);
       const desert = smoothstep(temp, 0.12, 0.42) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain * 0.4);
       const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain * 0.3);
-      const tundra = (1 - smoothstep(temp, -0.35, 0)) * (1 - mountain);
+      const tundra = 1 - smoothstep(temp, -0.35, 0);
       const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
       const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
       const crystal = smoothstep(magic, 0.45, 0.7) * land;
       const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
+      const riverFactor = smoothstep(moist, -0.1, 0.35);
 
       let h = 0;
-      h += continent * 7;
+      h += continent * 10;
 
-      const ridge = 1 - Math.abs(n.noise2D(x * 0.004, z * 0.004));
-      const ridges = ridge * ridge * ridge * 40;
+      const ridge = 1 - Math.abs(n.noise2D(x * 0.002, z * 0.002));
+      const ridges = ridge * ridge * ridge * 60;
 
-      const peakNoise = n.noise2D(x * 0.006, z * 0.006);
+      const peakNoise = n.noise2D(x * 0.003, z * 0.003);
       const sharpRidge = 1 - Math.abs(peakNoise);
-      const sharpPeaks = sharpRidge * sharpRidge * sharpRidge * 25;
+      const sharpPeaks = sharpRidge * sharpRidge * sharpRidge * 40;
 
-      const cliffNoise = Math.abs(n.noise2D(x * 0.008, z * 0.008) - n.noise2D(x * 0.009, z * 0.009));
-      const cliffs = cliffNoise * cliffNoise * 18;
+      const cliffNoise = Math.abs(n.noise2D(x * 0.004, z * 0.004) - n.noise2D(x * 0.0045, z * 0.0045));
+      const cliffs = cliffNoise * cliffNoise * 30;
 
-      const tallPeak = Math.max(0, n.noise2D(x * 0.002, z * 0.002) - 0.3) * 35;
+      const tallPeak = Math.max(0, n.noise2D(x * 0.001, z * 0.001) - 0.25) * 50;
 
       h += ridges * mountain;
       h += sharpPeaks * Math.max(0, mountain - 0.1);
       h += cliffs * Math.max(0, mountain - 0.25) * 2;
       h += tallPeak * Math.max(0, mountain - 0.1);
 
-      const hills = n.noise2D(x * 0.018, z * 0.018) * 3;
+      const hills = n.noise2D(x * 0.009, z * 0.009) * 4;
       h += hills * (1 - mountain * 0.7);
 
-      const detail = n.noise2D(x * 0.04, z * 0.04) * 0.6;
+      const detail = n.noise2D(x * 0.02, z * 0.02) * 0.8;
       h += detail;
 
       if (desert > 0.05) {
@@ -90,6 +91,12 @@ export class ChunkManager {
         h += n2.noise2D(x * 0.03, z * 0.03) * tundra * 0.5;
       }
 
+      if (riverFactor > 0.05) {
+        const riverNoise = Math.abs(n2.noise2D(x * 0.004, z * 0.004));
+        const riverValley = Math.max(0, 1 - riverNoise * 5);
+        h -= riverValley * riverFactor * 1.8;
+      }
+
       if (canyon > 0.05) {
         const nx = n2.noise2D(x * 0.004, z * 0.003);
         const nz = n2.noise2D(x * 0.003, z * 0.004);
@@ -104,12 +111,12 @@ export class ChunkManager {
     };
 
     this.getBiomeInfo = (x, z) => {
-      const continent = n.noise2D(x * 0.0014, z * 0.0014);
-      const temp = n.noise2D(x * 0.003, z * 0.003);
-      const moist = n.noise2D(x * 0.0035, z * 0.0035);
-      const magic = n2.noise2D(x * 0.0025, z * 0.0025);
-      const land = smoothstep(continent, -0.3, 0.05);
-      const mountain = smoothstep(continent, 0.2, 0.65);
+      const continent = n.noise2D(x * 0.0007, z * 0.0007);
+      const temp = n.noise2D(x * 0.0008, z * 0.0008);
+      const moist = n.noise2D(x * 0.0009, z * 0.0009);
+      const magic = n2.noise2D(x * 0.0007, z * 0.0007);
+      const land = smoothstep(continent, -0.35, 0.05);
+      const mountain = smoothstep(continent, 0.15, 0.55);
       return { continent, temp, moist, magic, land, mountain };
     };
 
@@ -269,27 +276,30 @@ class Chunk {
     const bio = getBiomeInfo(midX, midZ);
     const desert = smoothstep(bio.temp, 0.15, 0.45) * (1 - smoothstep(bio.moist, -0.2, 0.1)) * (1 - bio.mountain * 0.4);
     const forest = smoothstep(bio.temp, 0, 0.3) * smoothstep(bio.moist, 0.2, 0.5) * (1 - bio.mountain * 0.3);
-    const tundra = (1 - smoothstep(bio.temp, -0.35, 0)) * (1 - bio.mountain);
+    const tundra = 1 - smoothstep(bio.temp, -0.35, 0);
     const swamp = smoothstep(-bio.moist, 0, 0.3) * (1 - bio.mountain) * smoothstep(bio.continent, -0.3, 0.05);
     const crystal = smoothstep(bio.magic, 0.45, 0.7) * smoothstep(bio.continent, -0.3, 0.05);
     const plains = Math.max(0, 1 - desert - forest - tundra - swamp - bio.mountain) * 0.6;
 
-    let treeCount = 5, bushCount = 5, rockCount = 3;
+    let treeCount = 5, bushCount = 5, rockCount = 3, snowDriftCount = 0;
 
     if (forest > 0.3) treeCount = 16;
     else if (plains > 0.2) treeCount = 8;
     else if (swamp > 0.2) treeCount = 10;
-    else if (tundra > 0.3) treeCount = 3;
+    else if (tundra > 0.3) treeCount = 0;
+    else if (bio.mountain > 0.4) treeCount = 6;
     else treeCount = 5;
 
-    if (desert > 0.2 || swamp > 0.2) bushCount = 8;
+    if (tundra > 0.3) { bushCount = 0; snowDriftCount = 12 + Math.floor(rng() * 12); }
+    else if (desert > 0.2 || swamp > 0.2) bushCount = 8;
+    else if (bio.mountain > 0.4) bushCount = 3;
     else bushCount = 5;
 
     if (bio.mountain > 0.4 || bio.mountain > 0.5) rockCount = 8;
-    else if (tundra > 0.3) rockCount = 6;
+    else if (tundra > 0.3) rockCount = 10;
     else rockCount = 3;
 
-    const maxTreeHeight = mountainHeight(bio.mountain, 6) + 2;
+    const maxTreeHeight = 12 + bio.mountain * 25;
 
     for (let i = 0; i < treeCount; i++) {
       const x = ox + rng() * CHUNK_SIZE;
@@ -306,11 +316,12 @@ class Chunk {
           let tree;
           if (forest > 0.3) tree = rng() < 0.6 ? createPineTree(rng) : createOakTree(rng);
           else if (swamp > 0.2) tree = createSwampTree(rng);
-          else if (tundra > 0.3) { tree = createPineTree(rng); tree.scale.setScalar(0.5); }
+          else if (tundra > 0.3) { tree = createPineTree(rng); tree.userData.baseScale = 0.3 + rng() * 0.3; }
           else if (desert > 0.2) tree = createCactus(rng);
+          else if (bio.mountain > 0.4) { tree = createPineTree(rng); tree.userData.baseScale = 0.5 + rng() * 0.4; }
           else tree = rng() < 0.5 ? createPineTree(rng) : createOakTree(rng);
           tree.position.set(x, y, z);
-          const s = tree.userData.baseScale || 0.7 + rng() * 0.6;
+          const s = tree.userData.baseScale || 1.0 + rng() * 0.8;
           tree.scale.setScalar(s);
           tree.rotation.y = rng() * Math.PI * 2;
           this.group.add(tree);
@@ -335,10 +346,23 @@ class Chunk {
       const z = oz + rng() * CHUNK_SIZE;
       const y = getHeight(x, z);
       if (y > SEA_LEVEL + 0.5 && y < 20) {
-        const rock = createRock(rng);
+        const rock = createRock(rng, tundra > 0.3);
         rock.position.set(x, y, z);
         rock.scale.setScalar(0.3 + rng() * 0.8);
         this.group.add(rock);
+      }
+    }
+
+    for (let i = 0; i < snowDriftCount; i++) {
+      const x = ox + rng() * CHUNK_SIZE;
+      const z = oz + rng() * CHUNK_SIZE;
+      const y = getHeight(x, z);
+      if (y > SEA_LEVEL + 0.3 && y < 12) {
+        const drift = createSnowDrift(rng);
+        drift.position.set(x, y, z);
+        drift.scale.setScalar(0.4 + rng() * 0.8);
+        drift.rotation.y = rng() * Math.PI * 2;
+        this.group.add(drift);
       }
     }
 
@@ -407,28 +431,28 @@ function getTerrainColor(x, y, z, getBiomeInfo) {
 
   if (tundra > 0.3) {
     const pat = Math.sin(x * 0.02) * Math.sin(z * 0.02) * 0.5 + 0.5;
-    return { r: 0.38 + pat * 0.15, g: 0.5 + pat * 0.1, b: 0.38 + pat * 0.1 };
+    return { r: 0.75 + pat * 0.15, g: 0.74 + pat * 0.15, b: 0.82 + pat * 0.12 };
   }
 
-  if (y < 1.5) {
+  if (y < 2) {
     if (forest > 0.3) return { r: 0.18, g: 0.38, b: 0.1 };
     return { r: 0.3, g: 0.5, b: 0.16 };
   }
-  if (y < 4) {
-    const t = (y - 1.5) / 2.5;
+  if (y < 6) {
+    const t = (y - 2) / 4;
     const low = forest > 0.3 ? { r: 0.18, g: 0.38, b: 0.1 } : { r: 0.3, g: 0.5, b: 0.16 };
     return lerpColor(low, { r: 0.4, g: 0.48, b: 0.25 }, t);
   }
-  if (y < 8) {
-    const t = (y - 4) / 4;
+  if (y < 12) {
+    const t = (y - 6) / 6;
     return lerpColor({ r: 0.4, g: 0.48, b: 0.25 }, { r: 0.48, g: 0.46, b: 0.35 }, t);
   }
-  if (y < 14) {
-    const t = (y - 8) / 6;
+  if (y < 24) {
+    const t = (y - 12) / 12;
     return lerpColor({ r: 0.48, g: 0.46, b: 0.35 }, { r: 0.50, g: 0.44, b: 0.42 }, t);
   }
-  if (y < 22) {
-    const t = (y - 14) / 8;
+  if (y < 40) {
+    const t = (y - 24) / 16;
     return lerpColor({ r: 0.50, g: 0.44, b: 0.42 }, { r: 0.55, g: 0.52, b: 0.55 }, t);
   }
   const snowPat = Math.sin(x * 0.04) * Math.sin(z * 0.04) * 0.5 + 0.5;
@@ -456,10 +480,10 @@ function hslToRgb(h, s, l) {
 
 function createPineTree(rng) {
   const g = new THREE.Group();
-  const h = 4 + rng() * 5;
+  const h = 8 + rng() * 10;
   const trunkH = h * 0.25;
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5C3317, roughness: 0.9 });
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.18, trunkH, 6), trunkMat);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, trunkH, 6), trunkMat);
   trunk.position.y = trunkH / 2;
   g.add(trunk);
 
@@ -472,8 +496,8 @@ function createPineTree(rng) {
 
   for (let i = 0; i < layers; i++) {
     const t = i / layers;
-    const radius = (0.5 + rng() * 0.3) * (1 - t * 0.3);
-    const lh = (0.6 + rng() * 0.2) * h * 0.2;
+    const radius = (1 + rng() * 0.6) * (1 - t * 0.3);
+    const lh = (1.2 + rng() * 0.4) * h * 0.2;
     const cone = new THREE.Mesh(new THREE.ConeGeometry(radius, lh, 7), greens[i % 3]);
     cone.position.y = trunkH + i * (h * 0.15) + lh / 2;
     cone.castShadow = true;
@@ -484,10 +508,10 @@ function createPineTree(rng) {
 
 function createOakTree(rng) {
   const g = new THREE.Group();
-  const trunkH = 2 + rng() * 2;
-  const canopyR = 1.5 + rng() * 1.5;
+  const trunkH = 4 + rng() * 4;
+  const canopyR = 3 + rng() * 3;
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6B3A1F, roughness: 0.9 });
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, trunkH, 6), trunkMat);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, trunkH, 6), trunkMat);
   trunk.position.y = trunkH / 2;
   trunk.castShadow = true;
   g.add(trunk);
@@ -519,25 +543,25 @@ function createOakTree(rng) {
 
 function createSwampTree(rng) {
   const g = new THREE.Group();
-  const h = 3 + rng() * 3;
+  const h = 6 + rng() * 6;
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.9 });
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, h * 0.5, 6), trunkMat);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.4, h * 0.5, 6), trunkMat);
   trunk.position.y = h * 0.25;
   g.add(trunk);
 
   const capMat = new THREE.MeshStandardMaterial({ color: 0x2a4a2a, roughness: 0.8, flatShading: true });
   const darkMat = new THREE.MeshStandardMaterial({ color: 0x1a3a1a, roughness: 0.8, flatShading: true });
 
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.6 + rng() * 0.3, 6, 6), capMat);
-  cap.position.y = h * 0.5 + 0.3;
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(1.2 + rng() * 0.6, 6, 6), capMat);
+  cap.position.y = h * 0.5 + 0.6;
   cap.castShadow = true;
   g.add(cap);
 
   for (let i = 0; i < 3; i++) {
     const a = rng() * Math.PI * 2;
-    const d = 0.3 + rng() * 0.3;
-    const sub = new THREE.Mesh(new THREE.SphereGeometry(0.2 + rng() * 0.2, 5, 5), darkMat);
-    sub.position.set(Math.cos(a) * d, h * 0.5 + rng() * 0.2, Math.sin(a) * d);
+    const d = 0.6 + rng() * 0.6;
+    const sub = new THREE.Mesh(new THREE.SphereGeometry(0.4 + rng() * 0.4, 5, 5), darkMat);
+    sub.position.set(Math.cos(a) * d, h * 0.5 + rng() * 0.4, Math.sin(a) * d);
     g.add(sub);
   }
   return g;
@@ -546,16 +570,16 @@ function createSwampTree(rng) {
 function createCactus(rng) {
   const g = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.8, flatShading: true });
-  const h = 1.5 + rng() * 2.5;
-  const main = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, h, 6), mat);
+  const h = 3 + rng() * 5;
+  const main = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.25, h, 6), mat);
   main.position.y = h / 2;
   main.castShadow = true;
   g.add(main);
   if (rng() > 0.4) {
-    const armH = 0.5 + rng() * 1;
+    const armH = 1 + rng() * 2;
     const side = rng() > 0.5 ? 1 : -1;
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, armH, 6), mat);
-    arm.position.set(side * 0.15, h * 0.5, 0);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, armH, 6), mat);
+    arm.position.set(side * 0.3, h * 0.5, 0);
     arm.rotation.z = side * 0.3;
     arm.castShadow = true;
     g.add(arm);
@@ -574,8 +598,8 @@ function createCrystalSpire(rng) {
     emissiveIntensity: 0.3,
     flatShading: true,
   });
-  const h = 1 + rng() * 3;
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(0.1 + rng() * 0.15, h, 5), mat);
+  const h = 2 + rng() * 6;
+  const spire = new THREE.Mesh(new THREE.ConeGeometry(0.2 + rng() * 0.3, h, 5), mat);
   spire.position.y = h / 2;
   spire.castShadow = true;
   g.add(spire);
@@ -610,23 +634,39 @@ function createBush(rng, isDesert, isCrystal) {
   }
   const n = 2 + Math.floor(rng() * 3);
   for (let i = 0; i < n; i++) {
-    const size = 0.12 + rng() * 0.18;
+    const size = 0.25 + rng() * 0.35;
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 5, 5), mat);
-    sphere.position.set((rng() - 0.5) * 0.4, rng() * 0.2 - size * 0.2, (rng() - 0.5) * 0.4);
+    sphere.position.set((rng() - 0.5) * 0.8, rng() * 0.4 - size * 0.2, (rng() - 0.5) * 0.8);
     g.add(sphere);
   }
   return g;
 }
 
-function createRock(rng) {
-  const scale = 0.2 + rng() * 0.35;
+function createRock(rng, isTundra = false) {
+  const scale = 0.4 + rng() * 0.7;
   const geo = new THREE.DodecahedronGeometry(scale);
+  const lightness = isTundra ? 0.65 + rng() * 0.25 : 0.3 + rng() * 0.25;
+  const hue = isTundra ? 0.6 : 0;
   const mat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color().setHSL(0, 0, 0.3 + rng() * 0.25),
-    roughness: 0.9,
+    color: new THREE.Color().setHSL(hue, isTundra ? 0.1 : 0, lightness),
+    roughness: isTundra ? 0.4 : 0.9,
+    metalness: isTundra ? 0.2 : 0,
     flatShading: true,
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI);
   return mesh;
+}
+
+function createSnowDrift(rng) {
+  const scale = 0.3 + rng() * 0.7;
+  const geo = new THREE.SphereGeometry(scale, 7, 5);
+  geo.scale(1, 0.2 + rng() * 0.2, 1);
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(0.6, 0.05, 0.82 + rng() * 0.12),
+    roughness: 0.6,
+    metalness: 0,
+    flatShading: true,
+  });
+  return new THREE.Mesh(geo, mat);
 }

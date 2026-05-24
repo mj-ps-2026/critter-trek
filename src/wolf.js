@@ -55,7 +55,7 @@ const ENEMY_TYPES = {
     bodyColor: 0x5A3A1A, darkColor: 0x3A220A, accentColor: 0x8A5A2A,
     scale: 0.9, speed: 2.2, patrolSpeed: 1.0, chaseSpeed: 3.2,
     detectionRange: 20, attackRange: 1.5,
-    biomes: ['plains', 'forest'], weight: 3,
+    biomes: ['plains', 'forest'], weight: 2,
   },
   bat: {
     id: 'bat', name: 'Cave Bat', icon: '🦇',
@@ -363,7 +363,7 @@ export function pickEnemyType(getBiomeInfo, x, z) {
   const { temp, moist, mountain } = bio;
   const desert = smoothstep(temp, 0.15, 0.45) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain);
   const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain);
-  const tundra = (1 - smoothstep(temp, -0.35, 0)) * (1 - mountain);
+  const tundra = 1 - smoothstep(temp, -0.35, 0);
   const swamp = smoothstep(temp, 0.1, 0.35) * smoothstep(moist, 0.4, 0.7) * (1 - mountain);
   const crystal = bio.magic ? Math.max(0, (bio.magic - 0.3) * 2) : 0;
   const mountains = mountain;

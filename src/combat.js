@@ -97,7 +97,7 @@ export class Combat {
     this.enemyIconEl.textContent = creature.icon;
     this.enemyMaxEl.textContent = creature.hp;
 
-    this.#showMainActions();
+    this.#enableMain();
     this.#updateHP();
     this.#addLog(`${creature.displayName} attacks!`);
 
@@ -130,8 +130,13 @@ export class Combat {
     const target = attacker === 'fox' ? this.enemyGroup : this.foxGroup;
     const dir = new THREE.Vector3().subVectors(target.position, g.position);
     dir.y = 0;
-    dir.normalize();
-    const dist = g.position.distanceTo(target.position) * 0.35;
+    const len = dir.length();
+    if (len < 0.01) {
+      this.anim = null;
+      return;
+    }
+    dir.divideScalar(len);
+    const dist = len * 0.35;
     const dur = speed === 'fast' ? 0.2 : speed === 'medium' ? 0.3 : 0.45;
     this.anim = {
       group: g,
@@ -143,7 +148,7 @@ export class Combat {
   }
 
   updateAnim(dt) {
-    if (!this.anim) return;
+    if (!this.anim || !this.isActive) return;
     this.anim.t += dt;
     const p = Math.min(1, this.anim.t / this.anim.dur);
     if (p < 0.5) {
@@ -350,9 +355,13 @@ export class Combat {
 
   #end() {
     this.isActive = false;
+    this.anim = null;
     this.hud.style.display = 'none';
     this.ui.style.display = 'none';
     this.onCombatEnd(this.creature);
+    this.creature = null;
+    this.foxGroup = null;
+    this.enemyGroup = null;
   }
 
   #updateHP() {

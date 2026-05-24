@@ -30,9 +30,6 @@ console.log('[main.js] FaunaManager imported');
 import { ItemManager } from './items.js';
 console.log('[main.js] ItemManager imported');
 
-import { CaveManager, pickCaveEnemyType } from './cave.js';
-console.log('[main.js] CaveManager imported');
-
 import './style.css';
 console.log('[main.js] style.css imported');
 
@@ -46,7 +43,7 @@ console.log('[main.js] Loading overlay hidden');
 const _overlay = document.getElementById('game-over-overlay');
 if (_overlay) _overlay.style.display = 'none';
 
-const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2, CAVE = 3;
+const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2;
 let gameState = EXPLORE;
 
 const scene = new THREE.Scene();
@@ -66,6 +63,9 @@ console.log('[main.js] Renderer created, canvas in DOM, size:', window.innerWidt
 console.log('[main.js] Step: creating sky dome...');
 const sky = createSkyDome(scene);
 console.log('[main.js] Step: sky dome created');
+
+const sunMesh = createSunMesh(scene);
+const moonMesh = createMoonMesh(scene);
 
 console.log('[main.js] Step: ambient light');
 const ambientLight = new THREE.AmbientLight(0x303050, 0.35);
@@ -115,11 +115,9 @@ const worldSeed = Math.floor(Math.random() * 100000);
 const chunkManager = new ChunkManager(scene, worldSeed);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 
-console.log('[main.js] Step: fauna / items / cave managers');
+console.log('[main.js] Step: fauna / items');
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 const itemManager = new ItemManager(scene, chunkManager.getHeight);
-const caveManager = new CaveManager(scene, chunkManager.getHeight);
-let inCave = false;
 
 console.log('[main.js] Step: animal creation and spawn');
 const animal = new Animal();
@@ -141,6 +139,7 @@ console.log('[main.js] Step: combat');
 const combat = new Combat(
   (creature) => {
     gameState = EXPLORE;
+    combatCooldown = 60;
     const xpGain = Math.max(2, Math.floor(creature.hp * XP_PER_ENEMY_HP));
     foxCurrentHP = combat.foxHP;
     addXP(xpGain);
@@ -159,6 +158,18 @@ const combat = new Combat(
   itemManager
 );
 console.log('[main.js] Step: combat created');
+
+const biomeMenu = document.getElementById('biome-menu');
+const biomeMenuButtons = biomeMenu.querySelectorAll('[data-biome]');
+for (const btn of biomeMenuButtons) {
+  btn.addEventListener('click', () => {
+    teleportToBiome(btn.dataset.biome);
+    biomeMenu.style.display = 'none';
+  });
+}
+document.getElementById('biome-menu-close').addEventListener('click', () => {
+  biomeMenu.style.display = 'none';
+});
 
 // Use Clock despite deprecation warning - Timer needs extra update() calls
 const clock = new THREE.Clock();
@@ -182,6 +193,7 @@ const REGEN_HP_PER_SEC = 0.3;
 let foxLevel = 1;
 let foxXP = 0;
 let foxCurrentHP = BASE_HP;
+let combatCooldown = 0;
 
 function getMaxHP(level) { return Math.floor(BASE_HP + (level - 1) * HP_PER_LEVEL); }
 function getATK(level) { return BASE_ATK + (level - 1) * ATK_PER_LEVEL; }
@@ -200,7 +212,12 @@ function addXP(amount) {
   }
 }
 const keys = {};
-window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'KeyR' && gameState === EXPLORE) {
+    biomeMenu.style.display = biomeMenu.style.display === 'none' ? 'flex' : 'none';
+  }
+});
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 function findSpawn(getHeight) {
@@ -268,6 +285,22 @@ function createStars(scene) {
   return stars;
 }
 
+function createSunMesh(scene) {
+  const geo = new THREE.SphereGeometry(2.5, 16, 16);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xFFDD77 });
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+  return mesh;
+}
+
+function createMoonMesh(scene) {
+  const geo = new THREE.SphereGeometry(1.8, 16, 16);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xCCCCDD });
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+  return mesh;
+}
+
 function updateDayNight(dt, foxPos) {
   dayTime += dt * (Math.PI * 2 / dayLength);
   const a = dayTime;
@@ -288,7 +321,9 @@ function updateDayNight(dt, foxPos) {
   const moonHeightFactor = (moonY + 20) / 78;
   const moonFactor = Math.max(0, Math.min(1, moonHeightFactor));
 
-  sunLight.position.set(foxPos.x + sunX, sunY, foxPos.z + sunZ);
+  const sunWorldX = foxPos.x + sunX;
+  const sunWorldZ = foxPos.z + sunZ;
+  sunLight.position.set(sunWorldX, sunY, sunWorldZ);
   sunLight.target.position.copy(foxPos);
   sunLight.target.updateMatrixWorld();
   sunLight.shadow.camera.updateProjectionMatrix();
@@ -300,12 +335,22 @@ function updateDayNight(dt, foxPos) {
   const sunLum = 0.15 + dayFactor * 0.55;
   sunLight.color.setHSL(Math.max(0, sunHue), sunSat, sunLum);
 
-  moonLight.position.set(foxPos.x + moonX, moonY, foxPos.z + moonZ);
+  sunMesh.position.set(sunWorldX, sunY, sunWorldZ);
+  sunMesh.material.opacity = Math.max(0, Math.min(1, (dayFactor - 0.05) * 2));
+  sunMesh.material.transparent = true;
+
+  const moonWorldX = foxPos.x + moonX;
+  const moonWorldZ = foxPos.z + moonZ;
+  moonLight.position.set(moonWorldX, moonY, moonWorldZ);
   moonLight.target.position.copy(foxPos);
   moonLight.target.updateMatrixWorld();
-  moonLight.intensity = Math.max(0, (moonFactor - 0.15) * 0.5) * (1 - dayFactor);
+  moonLight.intensity = Math.max(0, (moonFactor - 0.15) * 2.0) * (1 - dayFactor);
 
-  ambientLight.intensity = 0.30 + dayFactor * 0.20 + moonLight.intensity * 0.15;
+  moonMesh.position.set(moonWorldX, moonY, moonWorldZ);
+  moonMesh.material.opacity = Math.max(0, Math.min(1, (moonFactor - 0.1) * 2));
+  moonMesh.material.transparent = true;
+
+  ambientLight.intensity = 0.50 + dayFactor * 0.20 + moonLight.intensity * 0.30;
   hemiLight.intensity = dayFactor * 0.5;
 
   const skyHue = 0.62 - dayFactor * 0.07;
@@ -322,15 +367,54 @@ function updateDayNight(dt, foxPos) {
 
 function spawnWolf() {
   const angle = Math.random() * Math.PI * 2;
-  const dist = 25 + Math.random() * 25;
+  const dist = 15 + Math.random() * 30;
   const pos = animal.group.position.clone();
   pos.x += Math.cos(angle) * dist;
   pos.z += Math.sin(angle) * dist;
   pos.y = chunkManager.getHeight(pos.x, pos.z);
+  if (pos.y < 0.3) return;
   const typeId = pickEnemyType(chunkManager.getBiomeInfo, pos.x, pos.z);
   const wolf = new Wolf(pos, chunkManager.getHeight, typeId);
   scene.add(wolf.group);
   wolves.push(wolf);
+}
+
+function getBiomeName(bio) {
+  const { temp, moist, mountain, magic } = bio;
+  if (mountain > 0.5) return 'mountain';
+  if (magic > 0.4) return 'crystal';
+  if (temp > 0.3 && moist < 0) return 'desert';
+  if (temp < -0.1) return 'tundra';
+  if (moist > 0.3 && temp > 0) return 'forest';
+  if (moist < -0.1) return 'swamp';
+  return 'plains';
+}
+
+function teleportToBiome(biomeName) {
+  const pos = animal.group.position;
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 10 + Math.random() * 500;
+    const x = pos.x + Math.cos(angle) * dist;
+    const z = pos.z + Math.sin(angle) * dist;
+    const bio = chunkManager.getBiomeInfo(x, z);
+    if (getBiomeName(bio) === biomeName) {
+      const y = chunkManager.getHeight(x, z);
+      if (y > 0.3) {
+        animal.group.position.set(x, y, z);
+        chunkManager.lastCX = null;
+        chunkManager.lastCZ = null;
+        infoEl.textContent = `Teleported to ${biomeName}`;
+        infoEl.style.background = 'rgba(50,150,255,0.7)';
+        setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+        return true;
+      }
+    }
+  }
+  infoEl.textContent = `Could not find ${biomeName} nearby`;
+  infoEl.style.background = 'rgba(200,50,50,0.7)';
+  setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+  return false;
 }
 
 let frameCount = 0;
@@ -342,6 +426,7 @@ function animate() {
     console.log('[main.js] animate frame', frameCount, 'dt:', dt, 'state:', gameState);
   }
 
+  try {
   switch (gameState) {
     case EXPLORE: {
       const pos = animal.group.position;
@@ -350,17 +435,30 @@ function animate() {
       itemManager.update(pos);
       updateDayNight(dt, pos);
 
-      const targetWolfCount = 7;
+      for (let i = wolves.length - 1; i >= 0; i--) {
+        if (wolves[i].group.position.distanceTo(pos) > 80) {
+          wolves[i].removeFrom(scene);
+          wolves.splice(i, 1);
+        }
+      }
+
+      if (combatCooldown > 0) {
+        combatCooldown = Math.max(0, combatCooldown - dt);
+      }
+
+      const targetWolfCount = 5;
       let wolfAttempts = 0;
-      while (wolves.length < targetWolfCount && wolfAttempts < 100) {
+      while (wolves.length < targetWolfCount && wolfAttempts < 200) {
         wolfAttempts++;
         spawnWolf();
       }
 
+      if (combatCooldown <= 0) {
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos);
         if (result === 'attacking') {
           gameState = COMBAT;
+          biomeMenu.style.display = 'none';
           const td = wolf.typeDef;
           combat.start({
             hp: td.hp, atk: td.atk, def: td.def,
@@ -378,6 +476,7 @@ function animate() {
       for (const faunaAnimal of fauna.animals) {
         if (faunaAnimal.group.position.distanceTo(pos) < 0.8) {
           gameState = COMBAT;
+          biomeMenu.style.display = 'none';
           const creature = faunaAnimal;
           combat.start({
             hp: creature.hp, atk: creature.atk, def: creature.def,
@@ -390,25 +489,9 @@ function animate() {
           break;
         }
       }
-
-      if (caveManager.entranceMarkers.length < 4 && Math.random() < 0.002) {
-        caveManager.placeEntranceNear(pos);
       }
 
       foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + REGEN_HP_PER_SEC * dt);
-
-      const entrance = caveManager.getNearestEntrance(pos);
-      if (entrance) {
-        infoEl.textContent = 'Cave entrance — walk in to explore';
-        infoEl.style.background = 'rgba(30,30,60,0.8)';
-        if (pos.distanceTo(entrance.pos) < 1.5) {
-          for (const w of wolves) w.removeFrom(scene);
-          wolves.length = 0;
-          caveManager.enterCave(animal.group);
-          gameState = CAVE;
-          break;
-        }
-      }
 
       controls.update(dt);
 
@@ -449,61 +532,12 @@ function animate() {
       break;
     }
     case GAME_OVER: break;
-    case CAVE: {
-      const cp = animal.group.position;
-      const result = caveManager.update(cp, dt);
-      if (result === 'exit') {
-        for (const w of wolves) w.removeFrom(scene);
-        wolves.length = 0;
-        caveManager.exitCave(animal.group);
-        gameState = EXPLORE;
-        break;
-      }
-
-      const caveTarget = 5;
-      while (wolves.length < caveTarget) {
-        const a = Math.random() * Math.PI * 2;
-        const r = 3 + Math.random() * 12;
-        const x = cp.x + Math.cos(a) * r;
-        const z = cp.z + Math.sin(a) * r;
-        const pos = new THREE.Vector3(x, 0.5, z);
-        const typeId = pickCaveEnemyType();
-        const enemy = new Wolf(pos, () => 0.5, typeId);
-        scene.add(enemy.group);
-        wolves.push(enemy);
-      }
-
-      for (const wolf of wolves) {
-        const res = wolf.update(dt, cp);
-        if (res === 'attacking') {
-          gameState = COMBAT;
-          const td = wolf.typeDef;
-          combat.start({
-            hp: td.hp, atk: td.atk, def: td.def,
-            displayName: td.name, icon: td.icon,
-            removeFrom: (s) => {
-              wolf.removeFrom(s);
-              const idx = wolves.indexOf(wolf);
-              if (idx !== -1) wolves.splice(idx, 1);
-            }
-          }, animal.group, wolf.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel));
-          break;
-        }
-      }
-
-      camera.position.set(
-        cp.x + 5,
-        cp.y + 3,
-        cp.z + 5
-      );
-      camera.lookAt(cp.x, cp.y + 0.5, cp.z);
-      infoEl.textContent = 'Find the blue portal to escape!';
-      infoEl.style.background = 'rgba(20,10,40,0.8)';
-      break;
-    }
   }
 
   renderer.render(scene, camera);
+  } catch (e) {
+    console.error('[animate] Uncaught error:', e);
+  }
 }
 
 animate();
