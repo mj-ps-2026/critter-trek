@@ -700,6 +700,12 @@ class FaunaAnimal {
       tentacle.rotation.z = Math.sin(a) * 0.2;
       g.add(tentacle);
     }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), mat(0x111111));
+      eye.position.set(s * 0.04, 0.04, -0.1);
+      g.add(eye);
+    }
   }
 
   update(dt, foxPos) {
