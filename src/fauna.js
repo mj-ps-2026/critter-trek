@@ -24,21 +24,25 @@ class FaunaAnimal {
     this.def = 0;
     this.displayName = 'Creature';
     this.icon = '🐾';
+    this.waterCreature = false;
 
     switch (type) {
-      case 'rabbit': this.speed = 5; this.fleeDist = 10; this.roamRadius = 10; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Rabbit'; this.icon = '🐇'; break;
-      case 'deer':   this.speed = 4; this.fleeDist = 20; this.roamRadius = 25; this.hp = 8; this.atk = 3; this.def = 1; this.displayName = 'Deer'; this.icon = '🦌'; break;
-      case 'lizard': this.speed = 3.5; this.fleeDist = 8; this.roamRadius = 8; this.hp = 4; this.atk = 1; this.def = 0; this.displayName = 'Lizard'; this.icon = '🦎'; break;
-      case 'bear':   this.speed = 2.5; this.fleeDist = 16; this.roamRadius = 20; this.hp = 18; this.atk = 6; this.def = 2; this.displayName = 'Bear'; this.icon = '🐻'; break;
+      case 'rabbit': this.speed = 5; this.fleeDist = 18; this.roamRadius = 10; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Rabbit'; this.icon = '🐇'; break;
+      case 'deer':   this.speed = 4; this.fleeDist = 12; this.roamRadius = 25; this.hp = 8; this.atk = 3; this.def = 1; this.displayName = 'Deer'; this.icon = '🦌'; break;
+      case 'lizard': this.speed = 3.5; this.fleeDist = 16; this.roamRadius = 8; this.hp = 4; this.atk = 1; this.def = 0; this.displayName = 'Lizard'; this.icon = '🦎'; break;
+      case 'bear':   this.speed = 2.5; this.fleeDist = 8; this.roamRadius = 25; this.hp = 18; this.atk = 6; this.def = 2; this.displayName = 'Bear'; this.icon = '🐻'; break;
       case 'arcticfox': this.speed = 4; this.fleeDist = 14; this.roamRadius = 18; this.hp = 6; this.atk = 3; this.def = 1; this.displayName = 'Arctic Fox'; this.icon = '🦊'; break;
-      case 'frog':    this.speed = 3; this.fleeDist = 6; this.roamRadius = 6; this.hp = 2; this.atk = 1; this.def = 0; this.displayName = 'Frog'; this.icon = '🐸'; break;
-      case 'glowbug': this.speed = 3.5; this.fleeDist = 5; this.roamRadius = 8; this.hp = 1; this.atk = 1; this.def = 0; this.displayName = 'Glowbug'; this.icon = '✨'; break;
-      case 'goat':    this.speed = 3.5; this.fleeDist = 18; this.roamRadius = 22; this.hp = 10; this.atk = 4; this.def = 2; this.displayName = 'Mountain Goat'; this.icon = '🐐'; break;
-      case 'snake':   this.speed = 2.5; this.fleeDist = 10; this.roamRadius = 10; this.hp = 3; this.atk = 2; this.def = 0; this.displayName = 'Rattlesnake'; this.icon = '🐍'; break;
+      case 'frog':    this.speed = 3; this.fleeDist = 18; this.roamRadius = 6; this.hp = 2; this.atk = 1; this.def = 0; this.displayName = 'Frog'; this.icon = '🐸'; break;
+      case 'glowbug': this.speed = 3.5; this.fleeDist = 20; this.roamRadius = 8; this.hp = 1; this.atk = 1; this.def = 0; this.displayName = 'Glowbug'; this.icon = '✨'; break;
+      case 'goat':    this.speed = 3.5; this.fleeDist = 8; this.roamRadius = 22; this.hp = 10; this.atk = 4; this.def = 2; this.displayName = 'Mountain Goat'; this.icon = '🐐'; break;
+      case 'snake':   this.speed = 2.5; this.fleeDist = 14; this.roamRadius = 10; this.hp = 3; this.atk = 2; this.def = 0; this.displayName = 'Rattlesnake'; this.icon = '🐍'; break;
       case 'owl':     this.speed = 3; this.fleeDist = 12; this.roamRadius = 15; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Owl'; this.icon = '🦉'; break;
-      case 'bison':   this.speed = 3; this.fleeDist = 15; this.roamRadius = 20; this.hp = 20; this.atk = 5; this.def = 3; this.displayName = 'Bison'; this.icon = '🦬'; break;
-      case 'heron':   this.speed = 3; this.fleeDist = 15; this.roamRadius = 12; this.hp = 4; this.atk = 2; this.def = 0; this.displayName = 'Heron'; this.icon = '🦩'; break;
-      case 'jackrabbit': this.speed = 6; this.fleeDist = 12; this.roamRadius = 12; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Jackrabbit'; this.icon = '🐇'; break;
+      case 'bison':   this.speed = 3; this.fleeDist = 7; this.roamRadius = 25; this.hp = 20; this.atk = 5; this.def = 3; this.displayName = 'Bison'; this.icon = '🦬'; break;
+      case 'heron':   this.speed = 3; this.fleeDist = 12; this.roamRadius = 12; this.hp = 4; this.atk = 2; this.def = 0; this.displayName = 'Heron'; this.icon = '🦩'; break;
+      case 'jackrabbit': this.speed = 6; this.fleeDist = 16; this.roamRadius = 12; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Jackrabbit'; this.icon = '🐇'; break;
+      case 'fish':     this.speed = 3; this.fleeDist = 8; this.roamRadius = 15; this.hp = 1; this.atk = 1; this.def = 0; this.displayName = 'Fish'; this.icon = '🐟'; this.waterCreature = true; break;
+      case 'seaturtle': this.speed = 1.5; this.fleeDist = 6; this.roamRadius = 20; this.hp = 6; this.atk = 2; this.def = 2; this.displayName = 'Sea Turtle'; this.icon = '🐢'; this.waterCreature = true; break;
+      case 'jellyfish': this.speed = 1; this.fleeDist = 10; this.roamRadius = 10; this.hp = 2; this.atk = 1; this.def = 0; this.displayName = 'Jellyfish'; this.icon = '🪼'; this.waterCreature = true; break;
     }
 
     this.group.position.set(position.x, getHeight(position.x, position.z), position.z);
@@ -60,6 +64,9 @@ class FaunaAnimal {
       case 'bison':   this.#buildBison(); break;
       case 'heron':   this.#buildHeron(); break;
       case 'jackrabbit': this.#buildJackrabbit(); break;
+      case 'fish':     this.#buildFish(); break;
+      case 'seaturtle': this.#buildSeaTurtle(); break;
+      case 'jellyfish': this.#buildJellyfish(); break;
     }
   }
 
@@ -138,6 +145,12 @@ class FaunaAnimal {
       g.add(leg);
     }
 
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(0x111111));
+      eye.position.set(s * 0.1, 1.15, -1.05);
+      g.add(eye);
+    }
+
     const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 4, 4), mat(white));
     tail.position.set(0, 0.75, 0.7);
     g.add(tail);
@@ -195,6 +208,12 @@ class FaunaAnimal {
       const ear = new THREE.Mesh(new THREE.SphereGeometry(0.075, 5, 5), mat(brown));
       ear.position.set(s * 0.2, 1.3, -0.85);
       g.add(ear);
+    }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0x111111));
+      eye.position.set(s * 0.12, 1.15, -1.08);
+      g.add(eye);
     }
 
     for (const [x, z] of [[0.45, 0.6], [-0.45, 0.6], [0.45, -0.6], [-0.45, -0.6]]) {
@@ -317,6 +336,12 @@ class FaunaAnimal {
     }));
     glow.position.set(0, 0.12, -0.08);
     g.add(glow);
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), mat(0x111111));
+      eye.position.set(s * 0.02, 0.09, -0.07);
+      g.add(eye);
+    }
   }
 
   #buildGoat() {
@@ -347,6 +372,12 @@ class FaunaAnimal {
       horn.rotation.z = s * 0.3;
       horn.rotation.x = -0.4;
       g.add(horn);
+    }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
+      eye.position.set(s * 0.07, 0.76, -0.65);
+      g.add(eye);
     }
 
     for (const [x, z] of [[0.2, 0.3], [-0.2, 0.3], [0.2, -0.3], [-0.2, -0.3]]) {
@@ -466,6 +497,12 @@ class FaunaAnimal {
       g.add(horn);
     }
 
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0x111111));
+      eye.position.set(s * 0.12, 0.78, -1.15);
+      g.add(eye);
+    }
+
     for (const [x, z] of [[0.4, 0.6], [-0.4, 0.6], [0.4, -0.6], [-0.4, -0.6]]) {
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.45, 5), mat(dark));
       leg.position.set(x, 0.22, z);
@@ -565,6 +602,106 @@ class FaunaAnimal {
     g.add(tail);
   }
 
+  #buildFish() {
+    const g = this.group;
+    const hue = Math.random() * 0.6 + 0.05;
+    const sat = 0.7 + Math.random() * 0.3;
+    const light = 0.5 + Math.random() * 0.3;
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(hue, sat, light),
+      emissive: new THREE.Color().setHSL(hue, sat * 0.5, light * 0.2),
+      emissiveIntensity: 0.4,
+      roughness: 0.4,
+      flatShading: true,
+    });
+    const finMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(hue, sat * 0.6, light * 0.5),
+      roughness: 0.6,
+      flatShading: true,
+    });
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 7), bodyMat);
+    body.scale.set(1, 0.3, 0.5);
+    g.add(body);
+
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 4), finMat);
+    tail.position.set(0, 0, 0.16);
+    tail.rotation.x = 0.2;
+    g.add(tail);
+
+    for (const s of [-1, 1]) {
+      const fin = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 3), finMat);
+      fin.position.set(s * 0.12, 0, 0);
+      fin.rotation.z = s * 0.3;
+      g.add(fin);
+    }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.02, 4, 4), mat(0x111111));
+      eye.position.set(s * 0.06, 0.02, -0.14);
+      g.add(eye);
+    }
+  }
+
+  #buildSeaTurtle() {
+    const g = this.group;
+    const shell = 0x5a7a3a, skin = 0x7a9a5a, dark = 0x3a4a2a;
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), mat(skin));
+    body.scale.set(1.1, 0.4, 0.8);
+    g.add(body);
+
+    const shellMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), mat(shell));
+    shellMesh.scale.set(1, 0.35, 0.8);
+    shellMesh.position.y = 0.04;
+    g.add(shellMesh);
+
+    for (const s of [-1, 1]) {
+      const flipper = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.18, 4), mat(dark));
+      flipper.position.set(s * 0.12, -0.03, 0.12);
+      flipper.rotation.z = s * 0.4;
+      flipper.rotation.x = -0.3;
+      g.add(flipper);
+      const front = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.18, 4), mat(dark));
+      front.position.set(s * 0.12, -0.03, -0.12);
+      front.rotation.z = s * 0.4;
+      front.rotation.x = 0.3;
+      g.add(front);
+    }
+
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 4), mat(0x111111));
+      eye.position.set(s * 0.06, 0, -0.18);
+      g.add(eye);
+    }
+  }
+
+  #buildJellyfish() {
+    const g = this.group;
+    const hue = Math.random() * 0.2 + 0.75;
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(hue, 0.5, 0.5),
+      transparent: true,
+      opacity: 0.5,
+      roughness: 0.2,
+      metalness: 0.1,
+      flatShading: true,
+    });
+
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), bodyMat);
+    bell.scale.set(1, 0.5, 1);
+    g.add(bell);
+
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const tentacle = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.008, 0.2, 3), bodyMat);
+      tentacle.position.set(Math.cos(a) * 0.06, -0.1, Math.sin(a) * 0.06);
+      tentacle.rotation.x = Math.cos(a) * 0.2;
+      tentacle.rotation.z = Math.sin(a) * 0.2;
+      g.add(tentacle);
+    }
+  }
+
   update(dt, foxPos) {
     this.clock += dt;
     const dist = this.group.position.distanceTo(foxPos);
@@ -588,7 +725,10 @@ class FaunaAnimal {
       const p = this.group.position;
       const tx = p.x + Math.cos(a) * r;
       const tz = p.z + Math.sin(a) * r;
-      this.targetPos = new THREE.Vector3(tx, this.getHeight(tx, tz), tz);
+      const ty = this.getHeight(tx, tz);
+      if (!this.waterCreature && ty < 0.3) { this.waitTimer = 0.1; return; }
+      if (this.waterCreature && ty >= 0.3) { this.waitTimer = 0.1; return; }
+      this.targetPos = new THREE.Vector3(tx, this.waterCreature ? p.y : ty, tz);
       this.waitTimer = 1.5 + Math.random() * 4;
     }
     this.#moveToward(this.targetPos, dt, this.speed * 0.3);
@@ -655,7 +795,7 @@ export class FaunaManager {
       return true;
     });
 
-    const targetCount = 18;
+    const targetCount = 30;
     let faunaAttempts = 0;
     while (this.animals.length < targetCount && faunaAttempts < 500) {
       faunaAttempts++;
@@ -664,9 +804,22 @@ export class FaunaManager {
       const px = foxPos.x + Math.cos(a) * r;
       const pz = foxPos.z + Math.sin(a) * r;
       const py = this.getHeight(px, pz);
-      if (py < 0.3) continue;
-
       const bio = this.getBiomeInfo(px, pz);
+
+      if (py < 0.3) {
+        if (bio.land < 0.3) {
+          const r2 = Math.random();
+          const wType = r2 < 0.6 ? 'fish' : r2 < 0.85 ? 'jellyfish' : 'seaturtle';
+          const depth = wType === 'fish' ? -0.5 + Math.random() * 0.4 : wType === 'jellyfish' ? -0.8 + Math.random() * 0.4 : -0.4 + Math.random() * 0.3;
+          const pos = new THREE.Vector3(px, depth, pz);
+          const animal = new FaunaAnimal(wType, pos, this.getHeight);
+          animal.group.position.y = pos.y;
+          this.scene.add(animal.group);
+          this.animals.push(animal);
+        }
+        continue;
+      }
+
       const type = this.#pickType(bio);
       if (!type) continue;
 
@@ -681,6 +834,16 @@ export class FaunaManager {
     }
   }
 
+  #weightedPick(pool) {
+    const total = pool.reduce((s, e) => s + e[1], 0);
+    let r = Math.random() * total;
+    for (const [type, weight] of pool) {
+      r -= weight;
+      if (r <= 0) return type;
+    }
+    return pool[0][0];
+  }
+
   #pickType(bio) {
     const { temp, moist, mountain, magic, continent, land } = bio;
     const desert = smoothstep(temp, 0.12, 0.42) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain);
@@ -689,23 +852,20 @@ export class FaunaManager {
     const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
     const crystal = smoothstep(magic, 0.45, 0.7) * land;
     const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
-    const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
+    const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * mountain * 1.2;
     const plains = Math.max(0, 1 - desert - forest - tundra - swamp - crystal - canyon - badlands - mountain) * 0.5;
 
-    const r = Math.random();
-    if (crystal > 0.3) return r < 0.6 ? 'glowbug' : 'deer';
-    if (swamp > 0.3) return r < 0.5 ? 'frog' : r < 0.75 ? 'heron' : r < 0.9 ? 'deer' : 'bear';
-    if (canyon > 0.2) return r < 0.6 ? 'goat' : 'rabbit';
-    if (badlands > 0.2) return r < 0.6 ? 'snake' : r < 0.85 ? 'lizard' : 'rabbit';
-    if (desert > 0.3) return r < 0.5 ? 'lizard' : r < 0.8 ? 'jackrabbit' : 'rabbit';
-    if (tundra > 0.3) return r < 0.45 ? 'arcticfox' : r < 0.75 ? 'rabbit' : r < 0.9 ? 'deer' : 'bear';
-    if (forest > 0.3) {
-      return r < 0.3 ? 'deer' : r < 0.55 ? 'rabbit' : r < 0.75 ? 'owl' : 'bear';
-    }
+    if (crystal > 0.3) return this.#weightedPick([['glowbug', 1], ['deer', 3], ['rabbit', 5]]);
+    if (swamp > 0.3) return this.#weightedPick([['frog', 5], ['heron', 1], ['deer', 2], ['bear', 1]]);
+    if (canyon > 0.2) return this.#weightedPick([['goat', 3], ['rabbit', 5]]);
+    if (badlands > 0.2) return this.#weightedPick([['snake', 3], ['lizard', 4], ['rabbit', 5]]);
+    if (desert > 0.3) return this.#weightedPick([['lizard', 4], ['jackrabbit', 3], ['rabbit', 5]]);
+    if (tundra > 0.3) return this.#weightedPick([['arcticfox', 3], ['rabbit', 5], ['deer', 2], ['bear', 1]]);
+    if (forest > 0.3) return this.#weightedPick([['deer', 3], ['rabbit', 5], ['owl', 2], ['bear', 1]]);
     if (plains > 0.15 || (mountain > 0.3 && mountain < 0.7)) {
-      return r < 0.4 ? 'bison' : r < 0.65 ? 'deer' : r < 0.85 ? 'rabbit' : 'lizard';
+      return this.#weightedPick([['bison', 1], ['deer', 3], ['rabbit', 5], ['lizard', 4]]);
     }
-    return r < 0.5 ? 'rabbit' : r < 0.75 ? 'deer' : null;
+    return this.#weightedPick([['rabbit', 5], ['deer', 2]]);
   }
 
   clearAll() {

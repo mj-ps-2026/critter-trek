@@ -111,9 +111,12 @@ console.log('[main.js] Step: stars');
 const stars = createStars(scene);
 
 console.log('[main.js] Step: chunk manager');
-const worldSeed = Math.floor(Math.random() * 100000);
+const saved = loadGame();
+const worldSeed = saved ? saved.worldSeed : Math.floor(Math.random() * 100000);
 const chunkManager = new ChunkManager(scene, worldSeed);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
+const normalFog = scene.fog;
+const underwaterFog = new THREE.FogExp2(0x0a2a4a, 0.015);
 
 console.log('[main.js] Step: fauna / items');
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
@@ -121,9 +124,17 @@ const itemManager = new ItemManager(scene, chunkManager.getHeight, chunkManager.
 
 console.log('[main.js] Step: animal creation and spawn');
 const animal = new Animal();
-const spawn = findSpawn(chunkManager.getHeight);
-console.log('[main.js] Spawn found:', spawn);
-animal.group.position.set(spawn.x, spawn.y, spawn.z);
+if (saved) {
+  animal.group.position.set(saved.position.x, saved.position.y, saved.position.z);
+  foxLevel = saved.foxLevel;
+  foxXP = saved.foxXP;
+  foxCurrentHP = saved.foxCurrentHP;
+  itemManager.inventory = { ...saved.inventory };
+  if (saved.dayTime != null) dayTime = saved.dayTime;
+} else {
+  const spawn = findSpawn(chunkManager.getHeight);
+  animal.group.position.set(spawn.x, spawn.y, spawn.z);
+}
 scene.add(animal.group);
 
 console.log('[main.js] Step: controls');
@@ -137,13 +148,20 @@ const wolves = [];
 
 console.log('[main.js] Step: combat');
 const combat = new Combat(
-  (creature) => {
+  (creature, defeated) => {
     gameState = EXPLORE;
     combatCooldown = 60;
     const xpGain = Math.max(2, Math.floor(creature.hp * XP_PER_ENEMY_HP));
     foxCurrentHP = combat.foxHP;
     addXP(xpGain);
+    saveGame();
     creature.removeFrom(scene);
+    if (defeated) {
+      const faces = creature.hp <= 4 ? '☺' : creature.hp <= 10 ? '☺☺' : creature.hp <= 18 ? '☺☺☺' : '☺☺☺☺';
+      infoEl.textContent = `Victory! ${faces}`;
+      infoEl.style.background = 'rgba(50,200,80,0.8)';
+      setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1500);
+    }
   },
   () => {
     const overlay = document.getElementById('game-over-overlay');
@@ -174,6 +192,8 @@ document.getElementById('biome-menu-close').addEventListener('click', () => {
 // Use Clock despite deprecation warning - Timer needs extra update() calls
 const drinkBtn = document.getElementById('btn-drink');
 drinkBtn.addEventListener('click', () => { controls.drinkPressed = true; });
+const diveBtn = document.getElementById('btn-dive');
+diveBtn.addEventListener('click', () => { controls.divePressed = true; });
 
 const clock = new THREE.Clock();
 const infoEl = document.getElementById('info');
@@ -204,6 +224,42 @@ function getMaxHP(level) { return Math.floor(BASE_HP + (level - 1) * HP_PER_LEVE
 function getATK(level) { return BASE_ATK + (level - 1) * ATK_PER_LEVEL; }
 function getDEF(level) { return BASE_DEF + (level - 1) * DEF_PER_LEVEL; }
 function xpForLevel(level) { return Math.floor(LEVEL_XP_BASE * Math.pow(level, LEVEL_XP_SCALE)); }
+
+const SAVE_KEY = 'crittertrek_save';
+
+function saveGame() {
+  try {
+    const data = {
+      version: 1,
+      worldSeed,
+      position: { x: animal.group.position.x, y: animal.group.position.y, z: animal.group.position.z },
+      foxLevel,
+      foxXP,
+      foxCurrentHP,
+      inventory: itemManager.getCounts(),
+      dayTime,
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn('Save failed:', e);
+  }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return data.version === 1 ? data : null;
+  } catch (e) {
+    console.warn('Load failed:', e);
+    return null;
+  }
+}
+
+function deleteSave() {
+  localStorage.removeItem(SAVE_KEY);
+}
 
 function addXP(amount) {
   foxXP += amount;
@@ -385,34 +441,63 @@ function spawnWolf() {
 }
 
 function getBiomeName(bio) {
-  const { continent, temp, moist, magic, land, mountain } = bio;
-  if (mountain > 0.5) return 'mountain';
+  if (bio.mountain > 0.5) return 'mountain';
+  return bio.biomeRegion || 'plains';
+}
 
-  const smoothstep = (t, lo, hi) => {
+function computeStrengths(bio) {
+  const { continent, temp, moist, magic, land, mountain } = bio;
+  const s = (t, lo, hi) => {
     t = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
     return t * t * (3 - 2 * t);
   };
-
-  const desert = smoothstep(temp, 0.15, 0.45) * (1 - smoothstep(moist, -0.2, 0.1)) * (1 - mountain * 0.4);
-  const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain * 0.3);
-  const tundra = (1 - smoothstep(temp, -0.35, 0)) * (1 - mountain);
-  const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
-  const crystal = smoothstep(magic, 0.45, 0.7) * land;
-  const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
-  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
-
-  if (crystal > 0.3) return 'crystal';
-  if (canyon > 0.2) return 'canyon';
-  if (desert > 0.2) return 'desert';
-  if (swamp > 0.3) return 'swamp';
-  if (tundra > 0.3) return 'tundra';
-  if (forest > 0.3) return 'forest';
-  if (badlands > 0.15) return 'badlands';
-  return 'plains';
+  return {
+    desert: s(temp, 0.15, 0.45) * (1 - s(moist, -0.2, 0.1)) * (1 - mountain * 0.4),
+    forest: s(temp, 0, 0.3) * s(moist, 0.2, 0.5) * (1 - mountain * 0.3),
+    tundra: (1 - s(temp, -0.35, 0)) * (1 - mountain),
+    swamp: s(-moist, 0, 0.3) * (1 - mountain) * land,
+    crystal: s(magic, 0.45, 0.7) * land,
+    canyon: s(temp, -0.1, 0.2) * s(-moist, -0.3, 0.05) * (1 - s(continent, 0.3, 0.5)) * (1 - mountain) * land,
+    badlands: s(temp, 0.08, 0.35) * (1 - s(moist, -0.3, 0.05)) * mountain * 1.2,
+  };
 }
 
 function teleportToBiome(biomeName) {
   const pos = animal.group.position;
+  let teleported = false;
+
+  const doTeleport = (x, y, z, label) => {
+    infoEl.textContent = label;
+    infoEl.style.background = 'rgba(50,150,255,0.7)';
+    setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+    animal.group.position.set(x, y, z);
+    chunkManager.lastCX = null;
+    chunkManager.lastCZ = null;
+    teleported = true;
+  };
+
+  // Phase 1: search for existing location
+  if (biomeName === 'ocean') {
+    for (let attempt = 0; attempt < 5000; attempt++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 50 + Math.random() * 30000;
+      const x = pos.x + Math.cos(angle) * dist;
+      const z = pos.z + Math.sin(angle) * dist;
+      const y = chunkManager.getHeight(x, z);
+      if (y < 0 && y > -10) {
+        doTeleport(x, 0, z, 'Teleported to Ocean');
+        break;
+      }
+    }
+    if (!teleported) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 200 + Math.random() * 2000;
+      const x = pos.x + Math.cos(angle) * dist;
+      const z = pos.z + Math.sin(angle) * dist;
+      doTeleport(x, 0, z, 'Teleported to Ocean');
+    }
+    return true;
+  }
 
   const rounds = [
     { maxDist: 500, attempts: 2000 },
@@ -422,31 +507,96 @@ function teleportToBiome(biomeName) {
   ];
 
   for (const round of rounds) {
+    if (teleported) break;
     for (let attempt = 0; attempt < round.attempts; attempt++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = 10 + Math.random() * round.maxDist;
       const x = pos.x + Math.cos(angle) * dist;
       const z = pos.z + Math.sin(angle) * dist;
       const bio = chunkManager.getBiomeInfo(x, z);
-      if (getBiomeName(bio) === biomeName) {
-        const y = chunkManager.getHeight(x, z);
-        if (y > 0.3) {
-          animal.group.position.set(x, y, z);
-          chunkManager.lastCX = null;
-          chunkManager.lastCZ = null;
-          infoEl.textContent = `Teleported to ${biomeName}`;
-          infoEl.style.background = 'rgba(50,150,255,0.7)';
-          setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
-          return true;
+      const y = chunkManager.getHeight(x, z);
+      if (y <= 0.3) continue;
+
+      if (biomeName === 'mountain') {
+        if (bio.mountain > 0.5) {
+          doTeleport(x, y, z, `Teleported to ${biomeName}`);
+          break;
+        }
+      } else {
+        if (bio.biomeRegion === biomeName) {
+          const strengths = computeStrengths(bio);
+          if ((strengths[biomeName] || 0) >= 0.2) {
+            doTeleport(x, y, z, `Teleported to ${biomeName}`);
+            break;
+          }
         }
       }
     }
   }
 
-  infoEl.textContent = `Could not find ${biomeName} nearby`;
-  infoEl.style.background = 'rgba(200,50,50,0.7)';
-  setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
-  return false;
+  if (!teleported) {
+    // Phase 2: ring scan (wider coverage)
+    for (let ring = 1; ring <= 80; ring++) {
+      if (teleported) break;
+      const dist = ring * 500;
+      const step = Math.max(300, dist * 0.15);
+      const count = Math.max(8, Math.round((2 * Math.PI * dist) / step));
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2 + ring * 0.1;
+        const x = pos.x + Math.cos(angle) * dist;
+        const z = pos.z + Math.sin(angle) * dist;
+        const bio = chunkManager.getBiomeInfo(x, z);
+        const y = chunkManager.getHeight(x, z);
+        if (y <= 0.3) continue;
+
+        if (biomeName === 'mountain') {
+          if (bio.mountain > 0.5) {
+            doTeleport(x, y, z, `Teleported to ${biomeName}`);
+            break;
+          }
+        } else {
+          if (bio.biomeRegion === biomeName) {
+            const strengths = computeStrengths(bio);
+            if ((strengths[biomeName] || 0) >= 0.2) {
+              doTeleport(x, y, z, `Teleported to ${biomeName}`);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!teleported) {
+    // Phase 3: create a biome pocket — force terrain to generate as the target biome
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 500 + Math.random() * 2000;
+    const px = pos.x + Math.cos(angle) * dist;
+    const pz = pos.z + Math.sin(angle) * dist;
+
+    chunkManager.setNoiseOverride(px, pz, biomeName, 1000);
+    chunkManager.chunkCache.clear();
+
+    let py = chunkManager.getHeight(px, pz);
+    if (py <= 0.3) py = 1;
+    doTeleport(px, py, pz, `Generated ${biomeName} biome`);
+  }
+
+  // Phase 4: postflight check — if still not in the right biome, force it at current position
+  const finalBio = chunkManager.getBiomeInfo(animal.group.position.x, animal.group.position.z);
+  if (getBiomeName(finalBio) !== biomeName) {
+    const cx = animal.group.position.x;
+    const cz = animal.group.position.z;
+    chunkManager.setNoiseOverride(cx, cz, biomeName, 1000);
+    chunkManager.chunkCache.clear();
+    const cy = Math.max(chunkManager.getHeight(cx, cz), 1);
+    animal.group.position.y = cy;
+    infoEl.textContent = `Forced ${biomeName} biome`;
+    infoEl.style.background = 'rgba(50,150,255,0.7)';
+    setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+  }
+
+  return true;
 }
 
 let frameCount = 0;
@@ -459,6 +609,7 @@ function animate() {
   }
 
   try {
+  chunkManager.animateWaves(clock.elapsedTime);
   switch (gameState) {
     case EXPLORE: {
       const pos = animal.group.position;
@@ -487,6 +638,18 @@ function animate() {
 
       if (combatCooldown <= 0 && dayFactor > 0.3) {
       const scaleLvl = 1 + (foxLevel - 1) * 0.15;
+
+      function applyWaterBonus(hp) {
+        if (controls.speedBoost > 0) {
+          controls.speedBoost = 0;
+          infoEl.textContent = '💧 Water power surges! −7 HP to enemy!';
+          infoEl.style.background = 'rgba(50,100,200,0.7)';
+          setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+          return Math.max(1, hp - 7);
+        }
+        return hp;
+      }
+
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos, dayFactor > 0.3);
         if (result === 'attacking') {
@@ -494,7 +657,7 @@ function animate() {
           biomeMenu.style.display = 'none';
           const td = wolf.typeDef;
           combat.start({
-            hp: Math.floor(td.hp * scaleLvl), atk: Math.floor(td.atk * scaleLvl), def: Math.floor(td.def * scaleLvl),
+            hp: applyWaterBonus(Math.floor(td.hp * scaleLvl)), atk: Math.floor(td.atk * scaleLvl), def: Math.floor(td.def * scaleLvl),
             displayName: td.name, icon: td.icon, scale: td.scale,
             removeFrom: (s) => {
               wolf.removeFrom(s);
@@ -512,7 +675,7 @@ function animate() {
           biomeMenu.style.display = 'none';
           const creature = faunaAnimal;
           combat.start({
-            hp: Math.floor(creature.hp * scaleLvl), atk: Math.floor(creature.atk * scaleLvl), def: Math.floor(creature.def * scaleLvl),
+            hp: applyWaterBonus(Math.floor(creature.hp * scaleLvl)), atk: Math.floor(creature.atk * scaleLvl), def: Math.floor(creature.def * scaleLvl),
             displayName: creature.displayName, icon: creature.icon,
             removeFrom: (s) => {
               creature.removeFrom(s);
@@ -527,14 +690,21 @@ function animate() {
       foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + REGEN_HP_PER_SEC * dt);
 
       if (drinkCooldown > 0) drinkCooldown -= dt;
+      if (controls.divePressed) {
+        controls.divePressed = false;
+        if (controls.isSwimming) {
+          controls.isDiving = !controls.isDiving;
+        }
+      }
       if (controls.drinkPressed) {
         controls.drinkPressed = false;
         if (drinkCooldown <= 0 && controls.isSwimming) {
           const heal = 5 + Math.floor(Math.random() * 6);
           foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + heal);
           combat.nextAtkMult = 1.5;
+          controls.speedBoost = 8;
           drinkCooldown = 10;
-          infoEl.textContent = `💧 Drank water! +${heal} HP · Next attack empowered!`;
+          infoEl.textContent = `💧 Drank water! +${heal} HP · ⚡ Speed boost! · Next attack empowered!`;
           infoEl.style.background = 'rgba(50,100,200,0.7)';
           setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
         } else if (drinkCooldown > 0) {
@@ -550,7 +720,20 @@ function animate() {
 
       controls.update(dt);
 
-      drinkBtn.style.display = controls.isSwimming && drinkCooldown <= 0 ? 'block' : 'none';
+      if (controls.isDiving) {
+        scene.fog = underwaterFog;
+        renderer.setClearColor(0x0a2a4a);
+        chunkManager.setWaterOpacity(0);
+      } else {
+        scene.fog = normalFog;
+        renderer.setClearColor(0x1a1a2e);
+        chunkManager.setWaterOpacity(0.55);
+      }
+
+      drinkBtn.style.display = controls.isSwimming && drinkCooldown <= 0 && !controls.isDiving ? 'block' : 'none';
+      diveBtn.style.display = controls.isSwimming ? 'block' : 'none';
+      diveBtn.textContent = controls.isDiving ? '⬆ Surface (Q)' : '🌊 Dive (Q)';
+      diveBtn.className = controls.isDiving ? 'diving' : '';
 
       sky.position.copy(camera.position);
       stars.position.copy(camera.position);
@@ -561,6 +744,7 @@ function animate() {
       } else {
         const cnt = itemManager.getCounts();
         let items = '';
+        if (controls.speedBoost > 0) items += ` ⚡${Math.ceil(controls.speedBoost)}s`;
         if (cnt.stick) items += ` 🪵${cnt.stick}`;
         if (cnt.rock) items += ` 🪨${cnt.rock}`;
         if (cnt.sharpstick) items += ` 🗡️${cnt.sharpstick}`;
@@ -573,7 +757,7 @@ function animate() {
         const nextXP = xpForLevel(foxLevel);
         const bioInfo = chunkManager.getBiomeInfo(pos.x, pos.z);
         const biomeName = getBiomeName(bioInfo);
-        infoEl.textContent = `${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP} · WASD · Shift sprint · A/D turn · F super` + items;
+        infoEl.textContent = `${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP}${controls.keys.sprint ? ' ⚡SPRINT' : ''} · WASD · Shift sprint · A/D turn · F super` + items;
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }
       break;

@@ -1,10 +1,18 @@
 import * as THREE from 'three';
 
+// Attack item chart:
+//   Common:           Stick (2-5), Rock (3-6), Sharp Stick (4-8), Cactus Needle (flat 3, ignoreDef)
+//   Heal:             Herb (6-12), Berry (3-7)
+//   Desert/Canyon/Badlands:  cactusneedle, bone abundant;  no mushrooms (too dry)
+//   Forest/Swamp/Crystal:    mushrooms, herbs abundant;    no cactusneedle (too wet)
+//   Mountain:                rocks, sticks abundant;       no mushrooms/cactus (snowy)
+//   Tundra:                  rocks, bone abundant;         no mushrooms/cactus (frozen)
+//   Plains:                  mixed;                        cactusneedle rare, mushrooms rare
 const ITEM_DEFS = {
   stick: { name: 'Stick', icon: '🪵', minDmg: 2, maxDmg: 5, color: 0x8B5E3C, category: 'weapon' },
   rock:  { name: 'Rock',  icon: '🪨', minDmg: 3, maxDmg: 6, color: 0x808080, category: 'weapon' },
   sharpstick: { name: 'Sharp Stick', icon: '🗡️', minDmg: 4, maxDmg: 8, color: 0x6B3E1C, category: 'weapon' },
-  cactusneedle: { name: 'Cactus Needle', icon: '🌵', minDmg: 3, maxDmg: 7, color: 0x3A7A2A, category: 'weapon' },
+  cactusneedle: { name: 'Cactus Needle', icon: '🌵', flatDmg: 3, color: 0x3A7A2A, category: 'weapon', ignoreDef: true },
   herb: { name: 'Herb', icon: '🌿', minHeal: 6, maxHeal: 12, color: 0x5AAA3A, category: 'heal' },
   berry: { name: 'Berry', icon: '🫐', minHeal: 3, maxHeal: 7, color: 0xAA3377, category: 'heal' },
   bone: { name: 'Bone', icon: '🦴', minDmg: 5, maxDmg: 10, color: 0xE8DCC8, category: 'weapon' },
@@ -106,44 +114,75 @@ class ItemManager {
   #pickItemType(x, z) {
     if (!this.getBiomeInfo) {
       const r = Math.random();
-      if (r < 0.2) return 'stick';
-      if (r < 0.35) return 'rock';
-      if (r < 0.5) return 'berry';
-      if (r < 0.6) return 'sharpstick';
-      if (r < 0.7) return 'bone';
-      if (r < 0.8) return 'cactusneedle';
-      if (r < 0.9) return 'herb';
+      if (r < 0.22) return 'stick';
+      if (r < 0.40) return 'sharpstick';
+      if (r < 0.56) return 'berry';
+      if (r < 0.69) return 'rock';
+      if (r < 0.82) return 'cactusneedle';
+      if (r < 0.93) return 'herb';
+      if (r < 0.97) return 'bone';
       return 'mushroom';
     }
     const bio = this.getBiomeInfo(x, z);
     const forest = this.#smoothstep(bio.temp, 0, 0.3) * this.#smoothstep(bio.moist, 0.2, 0.5) * (1 - bio.mountain * 0.3);
     const desert = this.#smoothstep(bio.temp, 0.12, 0.42) * (1 - this.#smoothstep(bio.moist, -0.2, 0.1)) * (1 - bio.mountain * 0.4);
+    const region = bio.biomeRegion;
     const r = Math.random();
-    if (desert > 0.3) {
-      if (r < 0.25) return 'rock';
-      if (r < 0.45) return 'cactusneedle';
-      if (r < 0.55) return 'bone';
-      if (r < 0.7) return 'stick';
-      if (r < 0.85) return 'sharpstick';
-      return 'mushroom';
-    }
-    if (forest > 0.3) {
-      if (r < 0.2) return 'stick';
-      if (r < 0.35) return 'sharpstick';
-      if (r < 0.5) return 'herb';
-      if (r < 0.6) return 'berry';
-      if (r < 0.7) return 'mushroom';
-      if (r < 0.85) return 'rock';
+
+    if (desert > 0.3 || region === 'canyon' || region === 'badlands') {
+      if (r < 0.28) return 'sharpstick';
+      if (r < 0.53) return 'cactusneedle';
+      if (r < 0.71) return 'stick';
+      if (r < 0.88) return 'rock';
       return 'bone';
     }
-    if (r < 0.18) return 'stick';
-    if (r < 0.32) return 'rock';
-    if (r < 0.46) return 'berry';
-    if (r < 0.56) return 'sharpstick';
-    if (r < 0.66) return 'bone';
-    if (r < 0.76) return 'mushroom';
-    if (r < 0.86) return 'herb';
-    return 'cactusneedle';
+
+    if (forest > 0.3 || region === 'swamp') {
+      if (r < 0.24) return 'stick';
+      if (r < 0.46) return 'sharpstick';
+      if (r < 0.64) return 'herb';
+      if (r < 0.77) return 'berry';
+      if (r < 0.88) return 'mushroom';
+      if (r < 0.98) return 'rock';
+      return 'bone';
+    }
+
+    if (region === 'mountain') {
+      if (r < 0.30) return 'rock';
+      if (r < 0.52) return 'stick';
+      if (r < 0.70) return 'sharpstick';
+      if (r < 0.82) return 'herb';
+      if (r < 0.92) return 'berry';
+      return 'bone';
+    }
+
+    if (region === 'tundra') {
+      if (r < 0.32) return 'rock';
+      if (r < 0.52) return 'stick';
+      if (r < 0.67) return 'sharpstick';
+      if (r < 0.82) return 'bone';
+      if (r < 0.92) return 'herb';
+      return 'berry';
+    }
+
+    if (region === 'crystal') {
+      if (r < 0.22) return 'mushroom';
+      if (r < 0.42) return 'herb';
+      if (r < 0.60) return 'stick';
+      if (r < 0.75) return 'berry';
+      if (r < 0.87) return 'sharpstick';
+      if (r < 0.95) return 'rock';
+      return 'bone';
+    }
+
+    if (r < 0.22) return 'stick';
+    if (r < 0.40) return 'sharpstick';
+    if (r < 0.55) return 'berry';
+    if (r < 0.69) return 'rock';
+    if (r < 0.83) return 'cactusneedle';
+    if (r < 0.93) return 'herb';
+    if (r < 0.98) return 'bone';
+    return 'mushroom';
   }
 
   update(foxPos) {

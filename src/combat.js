@@ -243,7 +243,7 @@ export class Combat {
     this.#disableAll();
     if (Math.random() < 0.4) {
       this.#addLog('Fox fled successfully!');
-      setTimeout(() => this.#end(), 600);
+      setTimeout(() => this.#end(false), 600);
     } else {
       this.#addLog('Failed to flee!');
       this.isPlayerDefending = false;
@@ -276,7 +276,7 @@ export class Combat {
         this.#updateHP();
         if (this.enemyHP <= 0) {
           this.#addLog(`${this.creature.displayName} defeated!`);
-          setTimeout(() => this.#end(), 1200);
+          setTimeout(() => this.#end(true), 1200);
           return;
         }
       } else {
@@ -375,17 +375,24 @@ export class Combat {
 
       this.#startAnim('fox', 'fast');
 
-      const raw = item.minDmg + Math.random() * (item.maxDmg - item.minDmg);
-      const sizeMult = this.enemyScale < 1.0 ? (2 - this.enemyScale) : 1.0;
-      const buffMult = this.nextAtkMult || 1.0;
-      this.nextAtkMult = null;
-      const dmg = Math.max(1, Math.floor(raw * sizeMult * buffMult - this.enemyDEF));
-      this.enemyHP -= dmg;
-      this.#addLog(`Fox uses ${item.name} for ${dmg} damage!`);
+      let dmg;
+      if (item.ignoreDef) {
+        dmg = item.flatDmg;
+        this.enemyHP -= dmg;
+        this.#addLog(`Fox uses ${item.name} for ${dmg} piercing damage!`);
+      } else {
+        const raw = item.minDmg + Math.random() * (item.maxDmg - item.minDmg);
+        const sizeMult = this.enemyScale < 1.0 ? (2 - this.enemyScale) : 1.0;
+        const buffMult = this.nextAtkMult || 1.0;
+        this.nextAtkMult = null;
+        dmg = Math.max(1, Math.floor(raw * sizeMult * buffMult - this.enemyDEF));
+        this.enemyHP -= dmg;
+        this.#addLog(`Fox uses ${item.name} for ${dmg} damage!`);
+      }
       this.#updateHP();
       if (this.enemyHP <= 0) {
         this.#addLog(`${this.creature.displayName} defeated!`);
-        setTimeout(() => this.#end(), 1200);
+        setTimeout(() => this.#end(true), 1200);
         return;
       }
       setTimeout(() => this.#enemyTurn(), 600);
@@ -395,12 +402,12 @@ export class Combat {
     }
   }
 
-  #end() {
+  #end(defeated = true) {
     this.isActive = false;
     this.anim = null;
     this.hud.style.display = 'none';
     this.ui.style.display = 'none';
-    this.onCombatEnd(this.creature);
+    this.onCombatEnd(this.creature, defeated);
     this.creature = null;
     this.foxGroup = null;
     this.enemyGroup = null;

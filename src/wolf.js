@@ -425,7 +425,7 @@ export function pickEnemyType(getBiomeInfo, x, z) {
   const crystal = magic ? Math.max(0, (magic - 0.3) * 2) : 0;
   const mountains = mountain;
   const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
-  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
+  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * mountain * 1.2;
 
   const weights = {};
   weights.desert = desert;

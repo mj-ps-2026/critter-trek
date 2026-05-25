@@ -10,6 +10,21 @@ function smoothstep(t, lo, hi) {
   return t * t * (3 - 2 * t);
 }
 
+function getBiomeTargets(biomeName) {
+  switch (biomeName) {
+    case 'desert':   return { continent: 0,    temp: 0.5,  moist: -0.4, magic: 0 };
+    case 'forest':   return { continent: 0,    temp: 0.2,  moist: 0.4,  magic: 0 };
+    case 'tundra':   return { continent: 0,    temp: -0.5, moist: 0,    magic: 0 };
+    case 'swamp':    return { continent: -0.1, temp: 0.2,  moist: -0.3, magic: 0 };
+    case 'crystal':  return { continent: 0,    temp: 0,    moist: 0,    magic: 0.7 };
+    case 'canyon':   return { continent: 0.2,  temp: 0.05, moist: -0.4, magic: 0 };
+    case 'badlands': return { continent: 0.5,  temp: 0.2,  moist: -0.4, magic: 0 };
+    case 'mountain': return { continent: 0.6,  temp: 0,    moist: 0,    magic: 0 };
+    case 'plains':   return { continent: 0,    temp: 0.1,  moist: 0.1,  magic: 0 };
+    default:         return { continent: 0,    temp: 0,    moist: 0,    magic: 0 };
+  }
+}
+
 export class ChunkManager {
   constructor(scene, seed = 42) {
     this.scene = scene;
@@ -22,12 +37,39 @@ export class ChunkManager {
 
     const n = new Noise(seed * 7 + 13);
     const n2 = new Noise(seed * 31 + 7);
+    const nBio = new Noise(seed * 97 + 23);
+
+    this.noiseOverride = null;
+
+    this.setNoiseOverride = (x, z, biomeName, radius) => {
+      this.noiseOverride = { x, z, biomeName, radius, targets: getBiomeTargets(biomeName) };
+    };
+
+    this.clearNoiseOverride = () => {
+      this.noiseOverride = null;
+    };
 
     this.getHeight = (x, z) => {
-      const continent = n.noise2D(x * 0.0007, z * 0.0007);
-      const temp = n.noise2D(x * 0.0008, z * 0.0008);
-      const moist = n.noise2D(x * 0.0009, z * 0.0009);
-      const magic = n2.noise2D(x * 0.0007, z * 0.0007);
+      let continent = n.noise2D(x * 0.0007, z * 0.0007);
+      let temp = n.noise2D(x * 0.0008, z * 0.0008);
+      let moist = n.noise2D(x * 0.0009, z * 0.0009);
+      let magic = n2.noise2D(x * 0.0007, z * 0.0007);
+
+      if (this.noiseOverride) {
+        const dx = x - this.noiseOverride.x;
+        const dz = z - this.noiseOverride.z;
+        const distSq = dx * dx + dz * dz;
+        const radius = this.noiseOverride.radius;
+        if (distSq < radius * radius) {
+          const dist = Math.sqrt(distSq);
+          const blend = smoothstep(1 - dist / radius, 0, 1);
+          const t = this.noiseOverride.targets;
+          continent += (t.continent - continent) * blend;
+          temp += (t.temp - temp) * blend;
+          moist += (t.moist - moist) * blend;
+          magic += (t.magic - magic) * blend;
+        }
+      }
 
       const land = smoothstep(continent, -0.35, 0.05);
       const mountain = smoothstep(continent, 0.15, 0.55);
@@ -35,7 +77,7 @@ export class ChunkManager {
       const forest = smoothstep(temp, 0, 0.3) * smoothstep(moist, 0.2, 0.5) * (1 - mountain * 0.3);
       const tundra = 1 - smoothstep(temp, -0.35, 0);
       const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
-      const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
+      const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * mountain * 1.2;
       const crystal = smoothstep(magic, 0.45, 0.7) * land;
       const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
       const riverFactor = smoothstep(moist, -0.1, 0.35);
@@ -78,8 +120,11 @@ export class ChunkManager {
       }
 
       if (badlands > 0.05) {
-        const mesa = Math.floor(n.noise2D(x * 0.003, z * 0.003) * 3) / 3;
-        h += (mesa * 7 - h * 0.3) * Math.min(1, badlands * 2);
+        const bv = n.noise2D(x * 0.003, z * 0.003);
+        const mesa = Math.floor(bv * 5) / 5;
+        h += (mesa * 12 - h * 0.4) * Math.min(1, badlands * 2);
+        const edge = Math.pow(1 - Math.abs(bv * 5 % 1 - 0.5) * 2, 4);
+        h += edge * badlands * 0.6;
       }
 
       if (crystal > 0.1) {
@@ -110,14 +155,47 @@ export class ChunkManager {
       return h;
     };
 
+    this.getBiomeRegion = (x, z) => {
+      const v = nBio.noise2D(x * 0.00015, z * 0.00015);
+      const t = (v + 1) / 2;
+      if (t < 0.10) return 'tundra';
+      if (t < 0.17) return 'crystal';
+      if (t < 0.37) return 'forest';
+      if (t < 0.55) return 'plains';
+      if (t < 0.65) return 'swamp';
+      if (t < 0.75) return 'desert';
+      if (t < 0.84) return 'canyon';
+      return 'badlands';
+    };
+
     this.getBiomeInfo = (x, z) => {
-      const continent = n.noise2D(x * 0.0007, z * 0.0007);
-      const temp = n.noise2D(x * 0.0008, z * 0.0008);
-      const moist = n.noise2D(x * 0.0009, z * 0.0009);
-      const magic = n2.noise2D(x * 0.0007, z * 0.0007);
+      let continent = n.noise2D(x * 0.0007, z * 0.0007);
+      let temp = n.noise2D(x * 0.0008, z * 0.0008);
+      let moist = n.noise2D(x * 0.0009, z * 0.0009);
+      let magic = n2.noise2D(x * 0.0007, z * 0.0007);
+
+      let biomeRegion = null;
+      if (this.noiseOverride) {
+        const dx = x - this.noiseOverride.x;
+        const dz = z - this.noiseOverride.z;
+        const distSq = dx * dx + dz * dz;
+        const radius = this.noiseOverride.radius;
+        if (distSq < radius * radius) {
+          biomeRegion = this.noiseOverride.biomeName;
+          const dist = Math.sqrt(distSq);
+          const blend = smoothstep(1 - dist / radius, 0, 1);
+          const t = this.noiseOverride.targets;
+          continent += (t.continent - continent) * blend;
+          temp += (t.temp - temp) * blend;
+          moist += (t.moist - moist) * blend;
+          magic += (t.magic - magic) * blend;
+        }
+      }
+
       const land = smoothstep(continent, -0.35, 0.05);
       const mountain = smoothstep(continent, 0.15, 0.55);
-      return { continent, temp, moist, magic, land, mountain };
+      if (!biomeRegion) biomeRegion = this.getBiomeRegion(x, z);
+      return { continent, temp, moist, magic, land, mountain, biomeRegion };
     };
 
     this.water = this.#createWater();
@@ -125,19 +203,38 @@ export class ChunkManager {
   }
 
   #createWater() {
-    const geo = new THREE.PlaneGeometry(400, 400);
+    const geo = new THREE.PlaneGeometry(400, 400, 80, 80);
+    geo.rotateX(-Math.PI / 2);
     const mat = new THREE.MeshStandardMaterial({
       color: 0x2a5a7a,
       transparent: true,
       opacity: 0.55,
       roughness: 0.15,
       metalness: 0.3,
+      side: THREE.DoubleSide,
     });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.rotation.x = -Math.PI / 2;
     mesh.position.y = SEA_LEVEL;
     mesh.receiveShadow = true;
     return mesh;
+  }
+
+  setWaterOpacity(opacity) {
+    this.water.material.opacity = opacity;
+  }
+
+  animateWaves(time) {
+    const pos = this.water.geometry.attributes.position;
+    const arr = pos.array;
+    for (let i = 0; i < arr.length; i += 3) {
+      const wx = arr[i];
+      const wz = arr[i + 2];
+      arr[i + 1] = Math.sin(wx * 0.03 + time * 1.5) * 0.25
+                 + Math.sin(wz * 0.05 + time * 2.0) * 0.18
+                 + Math.sin((wx + wz) * 0.02 + time * 1.2) * 0.12;
+    }
+    pos.needsUpdate = true;
+    this.water.geometry.computeVertexNormals();
   }
 
   update(foxPos) {
@@ -280,7 +377,7 @@ class Chunk {
     const swamp = smoothstep(-bio.moist, 0, 0.3) * (1 - bio.mountain) * smoothstep(bio.continent, -0.3, 0.05);
     const crystal = smoothstep(bio.magic, 0.45, 0.7) * smoothstep(bio.continent, -0.3, 0.05);
     const canyon = smoothstep(bio.temp, -0.1, 0.2) * smoothstep(-bio.moist, -0.3, 0.05) * (1 - smoothstep(bio.continent, 0.3, 0.5)) * (1 - bio.mountain) * bio.land;
-    const badlands = smoothstep(bio.temp, 0.08, 0.35) * (1 - smoothstep(bio.moist, -0.3, 0.05)) * Math.max(0, bio.mountain - 0.15) * 1.5;
+    const badlands = smoothstep(bio.temp, 0.08, 0.35) * (1 - smoothstep(bio.moist, -0.3, 0.05)) * bio.mountain * 1.2;
     const plains = Math.max(0, 1 - desert - forest - tundra - swamp - crystal - canyon - badlands - bio.mountain) * 0.6;
 
     let treeCount = 5, bushCount = 5, rockCount = 3, snowDriftCount = 0;
@@ -465,6 +562,20 @@ class Chunk {
           this.group.add(scrub);
         }
       }
+
+      const hoodooCount = 1 + Math.floor(rng() * 3);
+      for (let i = 0; i < hoodooCount; i++) {
+        const x = ox + rng() * CHUNK_SIZE;
+        const z = oz + rng() * CHUNK_SIZE;
+        const y = getHeight(x, z);
+        if (y > SEA_LEVEL + 1 && y < 15) {
+          const hoodoo = createHoodoo(rng);
+          hoodoo.position.set(x, y, z);
+          hoodoo.scale.setScalar(0.6 + rng() * 0.8);
+          hoodoo.rotation.y = rng() * Math.PI * 2;
+          this.group.add(hoodoo);
+        }
+      }
     }
 
     if (crystal > 0.2) {
@@ -505,7 +616,7 @@ function getTerrainColor(x, y, z, getBiomeInfo) {
   const swamp = smoothstep(-moist, 0, 0.3) * (1 - mountain) * land;
   const crystal = smoothstep(magic, 0.45, 0.7) * land;
   const canyon = smoothstep(temp, -0.1, 0.2) * smoothstep(-moist, -0.3, 0.05) * (1 - smoothstep(continent, 0.3, 0.5)) * (1 - mountain) * land;
-  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * Math.max(0, mountain - 0.15) * 1.5;
+  const badlands = smoothstep(temp, 0.08, 0.35) * (1 - smoothstep(moist, -0.3, 0.05)) * mountain * 1.2;
 
   if (y < SEA_LEVEL) {
     const depth = Math.min(1, (SEA_LEVEL - y) / 8);
@@ -538,7 +649,12 @@ function getTerrainColor(x, y, z, getBiomeInfo) {
 
   if (badlands > 0.15) {
     const pat = Math.sin(x * 0.05 + z * 0.03) * 0.5 + 0.5;
-    return { r: 0.55 + pat * 0.25, g: 0.25 + pat * 0.15, b: 0.1 + pat * 0.08 };
+    const strata = Math.sin(y * 3.0 + x * 0.01 + z * 0.01) * 0.5 + 0.5;
+    return {
+      r: Math.max(0, Math.min(1, 0.55 + pat * 0.25 - strata * 0.15)),
+      g: Math.max(0, Math.min(1, 0.25 + pat * 0.15 - strata * 0.1)),
+      b: Math.max(0, Math.min(1, 0.1 + pat * 0.08 - strata * 0.05))
+    };
   }
 
   if (y < 2) {
@@ -933,6 +1049,33 @@ function createRockPillar(rng) {
   mesh.position.y = h / 2;
   mesh.castShadow = true;
   return mesh;
+}
+
+function createHoodoo(rng) {
+  const g = new THREE.Group();
+  const h = 3 + rng() * 6;
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(0.07 + rng() * 0.04, 0.3, 0.3 + rng() * 0.2),
+    roughness: 0.9,
+    flatShading: true,
+  });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.25 + rng() * 0.15, 0.4 + rng() * 0.3, h * 0.6, 6), mat);
+  base.position.y = h * 0.3;
+  base.castShadow = true;
+  g.add(base);
+
+  const topMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(0.08 + rng() * 0.03, 0.25, 0.4 + rng() * 0.15),
+    roughness: 0.85,
+    flatShading: true,
+  });
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3 + rng() * 0.2, 0.2 + rng() * 0.1, h * 0.4, 6), topMat);
+  top.position.y = h * 0.6 + h * 0.2;
+  top.castShadow = true;
+  top.rotation.y = rng() * 0.3;
+  g.add(top);
+
+  return g;
 }
 
 function createDryScrub(rng) {

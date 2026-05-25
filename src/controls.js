@@ -20,7 +20,10 @@ export class Controls {
     this.superMode = false;
     this.superSpeed = 50;
     this.isSwimming = false;
+    this.isDiving = false;
     this.drinkPressed = false;
+    this.divePressed = false;
+    this.speedBoost = 0;
 
     this.setup();
   }
@@ -64,11 +67,13 @@ export class Controls {
       case 'ShiftLeft': case 'ShiftRight': this.keys.down = pressed; this.keys.sprint = pressed; break;
       case 'KeyF': if (pressed) this.superMode = !this.superMode; break;
       case 'KeyE': if (pressed) this.drinkPressed = true; break;
+      case 'KeyQ': if (pressed) this.divePressed = true; break;
     }
   }
 
   update(dt) {
     this.distance += (this.distanceTarget - this.distance) * 0.05;
+    if (this.speedBoost > 0) this.speedBoost = Math.max(0, this.speedBoost - dt);
 
     if (this.superMode) {
       this.#updateSuper(dt);
@@ -93,13 +98,28 @@ export class Controls {
     if (this.keys.backward) localMove.z = 1;
 
     const isMoving = localMove.length() > 0.01;
-    const sprintMult = this.keys.sprint ? 1.6 : 1;
+    const sprintMult = this.keys.sprint ? 2.5 : 1;
+    const boostMult = this.speedBoost > 0 ? 1.5 : 1;
 
     const pos = this.animal.group.position;
 
+    if (this.isDiving) {
+      this.isSwimming = true;
+      if (isMoving) {
+        const worldMove = localMove.clone().applyQuaternion(this.animal.group.quaternion);
+        pos.x += worldMove.x * this.moveSpeed * sprintMult * boostMult * dt;
+        pos.z += worldMove.z * this.moveSpeed * sprintMult * dt;
+      }
+      if (this.keys.up) pos.y += this.moveSpeed * dt;
+      if (this.keys.down) pos.y -= this.moveSpeed * dt;
+      if (pos.y > 0) { pos.y = 0; this.isDiving = false; }
+      this.animal.update(dt, this.moveSpeed * sprintMult, isMoving, true);
+      return;
+    }
+
     if (isMoving) {
       const worldMove = localMove.clone().applyQuaternion(this.animal.group.quaternion);
-      const newX = pos.x + worldMove.x * this.moveSpeed * sprintMult * dt;
+      const newX = pos.x + worldMove.x * this.moveSpeed * sprintMult * boostMult * dt;
       const newZ = pos.z + worldMove.z * this.moveSpeed * sprintMult * dt;
       const terrainY = this.getHeight(newX, newZ);
 

@@ -41,10 +41,20 @@
         backdrop-filter: blur(4px); transition: 0.2s;
       }
       #btn-drink:hover { background: rgba(50,100,180,0.9); border-color: #6ab5e0; }
+      #btn-dive {
+        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        padding: 12px 28px; font-size: 18px; border: 2px solid #4a8ab5;
+        background: rgba(30,60,100,0.8); color: #fff; border-radius: 8px;
+        cursor: pointer; z-index: 100; font-family: system-ui, sans-serif;
+        backdrop-filter: blur(4px); transition: 0.2s;
+      }
+      #btn-dive:hover { background: rgba(50,100,180,0.9); border-color: #6ab5e0; }
+      #btn-dive.diving { background: rgba(180,80,50,0.8); border-color: #d48a5a; }
     </style>
     <div id="app"></div>
     <div id="info">WASD to move · A/D to turn · Click & drag to orbit</div>
     <button id="btn-drink" style="display:none">💧 Drink Water (E)</button>
+    <button id="btn-dive" style="display:none">🌊 Dive (Q)</button>
 
     <div id="combat-flash"></div>
 
@@ -111,6 +121,7 @@
           <button data-biome="crystal">💎 Crystal</button>
           <button data-biome="canyon">🏜️ Canyon</button>
           <button data-biome="badlands">⛰️ Badlands</button>
+          <button data-biome="ocean">🌊 Ocean</button>
         </div>
         <button id="biome-menu-close">Cancel (R)</button>
       </div>
