@@ -116,7 +116,7 @@ const worldSeed = saved ? saved.worldSeed : Math.floor(Math.random() * 100000);
 const chunkManager = new ChunkManager(scene, worldSeed);
 scene.fog = new THREE.FogExp2(0x9dc4b0, 0.002);
 const normalFog = scene.fog;
-const underwaterFog = new THREE.FogExp2(0x0a2a4a, 0.015);
+const underwaterFog = new THREE.FogExp2(0x1a6a9a, 0.008);
 
 console.log('[main.js] Step: fauna / items');
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
@@ -440,7 +440,8 @@ function spawnWolf() {
   wolves.push(wolf);
 }
 
-function getBiomeName(bio) {
+function getBiomeName(bio, y) {
+  if (y < 0.3) return 'ocean';
   if (bio.mountain > 0.5) return 'mountain';
   return bio.biomeRegion || 'plains';
 }
@@ -584,7 +585,7 @@ function teleportToBiome(biomeName) {
 
   // Phase 4: postflight check — if still not in the right biome, force it at current position
   const finalBio = chunkManager.getBiomeInfo(animal.group.position.x, animal.group.position.z);
-  if (getBiomeName(finalBio) !== biomeName) {
+  if (getBiomeName(finalBio, animal.group.position.y) !== biomeName) {
     const cx = animal.group.position.x;
     const cz = animal.group.position.z;
     chunkManager.setNoiseOverride(cx, cz, biomeName, 1000);
@@ -730,8 +731,8 @@ function animate() {
         chunkManager.setWaterOpacity(0.55);
       }
 
-      drinkBtn.style.display = controls.isSwimming && drinkCooldown <= 0 && !controls.isDiving ? 'block' : 'none';
-      diveBtn.style.display = controls.isSwimming ? 'block' : 'none';
+      drinkBtn.style.display = gameState === EXPLORE && controls.isSwimming && drinkCooldown <= 0 && !controls.isDiving ? 'block' : 'none';
+      diveBtn.style.display = gameState === EXPLORE && controls.isSwimming ? 'block' : 'none';
       diveBtn.textContent = controls.isDiving ? '⬆ Surface (Q)' : '🌊 Dive (Q)';
       diveBtn.className = controls.isDiving ? 'diving' : '';
 
@@ -756,7 +757,7 @@ function animate() {
         const maxHP = getMaxHP(foxLevel);
         const nextXP = xpForLevel(foxLevel);
         const bioInfo = chunkManager.getBiomeInfo(pos.x, pos.z);
-        const biomeName = getBiomeName(bioInfo);
+        const biomeName = getBiomeName(bioInfo, pos.y);
         infoEl.textContent = `${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP}${controls.keys.sprint ? ' ⚡SPRINT' : ''} · WASD · Shift sprint · A/D turn · F super` + items;
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }

@@ -25,6 +25,7 @@ class FaunaAnimal {
     this.displayName = 'Creature';
     this.icon = '🐾';
     this.waterCreature = false;
+    this.amphibious = false;
 
     switch (type) {
       case 'rabbit': this.speed = 5; this.fleeDist = 18; this.roamRadius = 10; this.hp = 3; this.atk = 1; this.def = 0; this.displayName = 'Rabbit'; this.icon = '🐇'; break;
@@ -45,7 +46,10 @@ class FaunaAnimal {
       case 'jellyfish': this.speed = 1; this.fleeDist = 10; this.roamRadius = 10; this.hp = 2; this.atk = 1; this.def = 0; this.displayName = 'Jellyfish'; this.icon = '🪼'; this.waterCreature = true; break;
     }
 
-    this.group.position.set(position.x, getHeight(position.x, position.z), position.z);
+    if (!this.waterCreature && this.hp <= 4) this.amphibious = true;
+
+    const h = getHeight(position.x, position.z);
+    this.group.position.set(position.x, this.waterCreature ? position.y : this.amphibious && h < 0.3 ? 0 : h, position.z);
     this.#build();
   }
 
@@ -732,9 +736,10 @@ class FaunaAnimal {
       const tx = p.x + Math.cos(a) * r;
       const tz = p.z + Math.sin(a) * r;
       const ty = this.getHeight(tx, tz);
-      if (!this.waterCreature && ty < 0.3) { this.waitTimer = 0.1; return; }
+      if (!this.waterCreature && !this.amphibious && ty < 0.3) { this.waitTimer = 0.1; return; }
       if (this.waterCreature && ty >= 0.3) { this.waitTimer = 0.1; return; }
-      this.targetPos = new THREE.Vector3(tx, this.waterCreature ? p.y : ty, tz);
+      const targetY = this.waterCreature ? p.y : this.amphibious && ty < 0.3 ? 0 : ty;
+      this.targetPos = new THREE.Vector3(tx, targetY, tz);
       this.waitTimer = 1.5 + Math.random() * 4;
     }
     this.#moveToward(this.targetPos, dt, this.speed * 0.3);
@@ -747,7 +752,8 @@ class FaunaAnimal {
     const p = this.group.position;
     const tx = p.x + dir.x * 15;
     const tz = p.z + dir.z * 15;
-    const target = new THREE.Vector3(tx, this.getHeight(tx, tz), tz);
+    const targetY = this.waterCreature ? p.y : this.getHeight(tx, tz);
+    const target = new THREE.Vector3(tx, targetY, tz);
     this.#moveToward(target, dt, this.speed);
 
     if (this.group.position.distanceTo(foxPos) > this.fleeDist * 3) {
@@ -764,7 +770,10 @@ class FaunaAnimal {
     dir.normalize();
     pos.x += dir.x * speed * dt;
     pos.z += dir.z * speed * dt;
-    pos.y = this.getHeight(pos.x, pos.z);
+    if (!this.waterCreature) {
+      const h = this.getHeight(pos.x, pos.z);
+      pos.y = this.amphibious && h < 0.3 ? 0 : h;
+    }
     this.group.rotation.y = Math.atan2(dir.x, -dir.z);
   }
 
@@ -801,38 +810,44 @@ export class FaunaManager {
       return true;
     });
 
-    const targetCount = 30;
+    let waterCount = this.animals.filter(a => a.waterCreature).length;
+    let landCount = this.animals.length - waterCount;
+    const waterTarget = foxPos.y < 0.3 ? 20 : 5;
+    const landTarget = 30 - waterTarget;
     let faunaAttempts = 0;
-    while (this.animals.length < targetCount && faunaAttempts < 500) {
+    while (faunaAttempts < 500) {
+      if (waterCount >= waterTarget && landCount >= landTarget) break;
       faunaAttempts++;
       const a = Math.random() * Math.PI * 2;
-      const r = 12 + Math.random() * 25;
+      const r = 3 + Math.random() * 20;
       const px = foxPos.x + Math.cos(a) * r;
       const pz = foxPos.z + Math.sin(a) * r;
       const py = this.getHeight(px, pz);
       const bio = this.getBiomeInfo(px, pz);
 
-      if (py < 0.3) {
-        if (bio.land < 0.3) {
-          const r2 = Math.random();
-          const wType = r2 < 0.6 ? 'fish' : r2 < 0.85 ? 'jellyfish' : 'seaturtle';
-          const depth = wType === 'fish' ? -0.5 + Math.random() * 0.4 : wType === 'jellyfish' ? -0.8 + Math.random() * 0.4 : -0.4 + Math.random() * 0.3;
-          const pos = new THREE.Vector3(px, depth, pz);
-          const animal = new FaunaAnimal(wType, pos, this.getHeight);
-          animal.group.position.y = pos.y;
-          this.scene.add(animal.group);
-          this.animals.push(animal);
-        }
+      if (py < 0.3 && waterCount < waterTarget) {
+        const r2 = Math.random();
+        const wType = r2 < 0.5 ? 'fish' : r2 < 0.7 ? 'jellyfish' : r2 < 0.85 ? 'seaturtle' : 'snake';
+        const depth = wType === 'fish' ? -0.3 + Math.random() * 0.3 : wType === 'jellyfish' ? -0.6 + Math.random() * 0.3 : -0.3 + Math.random() * 0.2;
+        const pos = new THREE.Vector3(px, depth, pz);
+        const animal = new FaunaAnimal(wType, pos, this.getHeight);
+        animal.waterCreature = true;
+        animal.group.position.y = pos.y;
+        this.scene.add(animal.group);
+        this.animals.push(animal);
+        waterCount++;
         continue;
       }
 
-      const type = this.#pickType(bio);
-      if (!type) continue;
-
-      const pos = new THREE.Vector3(px, py, pz);
-      const animal = new FaunaAnimal(type, pos, this.getHeight);
-      this.scene.add(animal.group);
-      this.animals.push(animal);
+      if (py >= 0.3 && landCount < landTarget) {
+        const type = this.#pickType(bio);
+        if (!type) continue;
+        const pos = new THREE.Vector3(px, py, pz);
+        const animal = new FaunaAnimal(type, pos, this.getHeight);
+        this.scene.add(animal.group);
+        this.animals.push(animal);
+        landCount++;
+      }
     }
 
     for (const a of this.animals) {
