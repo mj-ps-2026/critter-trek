@@ -592,6 +592,20 @@ class Chunk {
         }
       }
     }
+
+    const seashellCount = 2 + Math.floor(rng() * 4);
+    for (let i = 0; i < seashellCount; i++) {
+      const x = ox + rng() * CHUNK_SIZE;
+      const z = oz + rng() * CHUNK_SIZE;
+      const y = getHeight(x, z);
+      if (y > SEA_LEVEL + 0.05 && y < 0.6) {
+        const shell = createSeashell(rng);
+        shell.position.set(x, y, z);
+        shell.scale.setScalar(0.3 + rng() * 0.4);
+        shell.rotation.y = rng() * Math.PI * 2;
+        this.group.add(shell);
+      }
+    }
   }
 
   #seededRandom(seed) {
@@ -621,6 +635,13 @@ function getTerrainColor(x, y, z, getBiomeInfo) {
   if (y < SEA_LEVEL) {
     const depth = Math.min(1, (SEA_LEVEL - y) / 8);
     return { r: 0.05 + depth * 0.15, g: 0.18 + depth * 0.2, b: 0.3 + depth * 0.3 };
+  }
+
+  if (y < 0.6) {
+    const shoreFactor = 1 - y / 0.6;
+    const sand = { r: 0.70, g: 0.60, b: 0.40 };
+    if (desert > 0.2) return { r: 0.70 + Math.sin(x * 0.03 + z * 0.02) * 0.1, g: 0.60 + Math.sin(x * 0.03 + z * 0.02) * 0.08, b: 0.40 };
+    return { r: sand.r - shoreFactor * 0.05, g: sand.g - shoreFactor * 0.05, b: sand.b - shoreFactor * 0.03 };
   }
 
   if (crystal > 0.3 && y > 0.5) {
@@ -1107,4 +1128,25 @@ function createSnowDrift(rng) {
     flatShading: true,
   });
   return new THREE.Mesh(geo, mat);
+}
+
+function createSeashell(rng) {
+  const g = new THREE.Group();
+  const hues = [0.08, 0.12, 0.0, 0.05, 0.1];
+  const hue = hues[Math.floor(rng() * hues.length)];
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color().setHSL(hue, 0.3, 0.45 + rng() * 0.2),
+    roughness: 0.7,
+    metalness: 0.3,
+    flatShading: true,
+  });
+  const shell = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.04, 5), mat);
+  shell.scale.set(1, 1, 0.6);
+  shell.rotation.x = Math.PI / 2;
+  g.add(shell);
+  const ridge = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 4, 6), mat);
+  ridge.position.y = 0.01;
+  ridge.scale.set(1, 1, 0.6);
+  g.add(ridge);
+  return g;
 }
