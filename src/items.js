@@ -18,6 +18,9 @@ const ITEM_DEFS = {
   bone: { name: 'Bone', icon: '🦴', minDmg: 5, maxDmg: 10, color: 0xE8DCC8, category: 'weapon' },
   mushroom: { name: 'Mushroom', icon: '🍄', atkMult: 1.5, color: 0xCC4444, category: 'buff' },
   feather: { name: 'Feather', icon: '🪶', color: 0xE8E0E0, category: 'craft' },
+  seaweed: { name: 'Seaweed', icon: '🌱', color: 0x2A7A3A, category: 'craft' },
+  jellyfisharm: { name: 'Jellyfish Arm', icon: '🪼', flatDmg: 5, color: 0xAA55CC, category: 'weapon', ignoreDef: true },
+  starfisharm: { name: 'Starfish Arm', icon: '⭐', minHeal: 10, maxHeal: 18, color: 0xFF8844, category: 'heal', atkMult: 1.3 },
 };
 
 class WorldItem {
@@ -87,6 +90,32 @@ class WorldItem {
       vane.position.set(-0.02, 0.06, 0);
       vane.rotation.z = 0.3;
       this.group.add(vane);
+    } else if (this.type === 'seaweed') {
+      for (let i = 0; i < 3; i++) {
+        const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.015, 0.15 + Math.random() * 0.1, 4), mat);
+        strand.position.set((Math.random() - 0.5) * 0.06, 0.02, (Math.random() - 0.5) * 0.06);
+        strand.rotation.z = (Math.random() - 0.5) * 0.4;
+        strand.rotation.x = (Math.random() - 0.5) * 0.3;
+        this.group.add(strand);
+      }
+    } else if (this.type === 'jellyfisharm') {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.025, 0.18, 5), new THREE.MeshStandardMaterial({ color: 0xCC77EE, roughness: 0.2, metalness: 0.1 }));
+      arm.position.y = 0.02;
+      arm.rotation.z = 0.3;
+      this.group.add(arm);
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), new THREE.MeshStandardMaterial({ color: 0xEE88FF, emissive: 0xAA55CC, emissiveIntensity: 0.3 }));
+      tip.position.set(0.03, 0.1, 0);
+      this.group.add(tip);
+    } else if (this.type === 'starfisharm') {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.005, 0.15, 5), mat);
+      arm.position.y = 0.02;
+      arm.rotation.z = 0.5;
+      this.group.add(arm);
+      const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.005, 0.15, 5), mat);
+      arm2.position.y = 0.02;
+      arm2.rotation.z = -0.5;
+      arm2.rotation.y = 0.5;
+      this.group.add(arm2);
     } else {
       const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07 + Math.random() * 0.04), mat);
       mesh.position.y = 0.04;
@@ -113,7 +142,7 @@ class ItemManager {
     this.getHeight = getHeight;
     this.getBiomeInfo = getBiomeInfo;
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0 };
   }
 
   #smoothstep(t, lo, hi) {
@@ -199,6 +228,13 @@ class ItemManager {
     return 'mushroom';
   }
 
+  #pickOceanItemType() {
+    const r = Math.random();
+    if (r < 0.45) return 'seaweed';
+    if (r < 0.70) return 'jellyfisharm';
+    return 'starfisharm';
+  }
+
   update(foxPos) {
     this.items = this.items.filter(item => {
       if (item.group.position.distanceTo(foxPos) > 90) {
@@ -209,14 +245,20 @@ class ItemManager {
     });
 
     let attempts = 0;
-    while (this.items.length < 35 && attempts < 300) {
+    while (this.items.length < 45 && attempts < 400) {
       attempts++;
       const a = Math.random() * Math.PI * 2;
-      const r = 8 + Math.random() * 25;
+      const r = 6 + Math.random() * 25;
       const x = foxPos.x + Math.cos(a) * r;
       const z = foxPos.z + Math.sin(a) * r;
       const y = this.getHeight(x, z);
-      if (y < 0.3) continue;
+      if (y < 0.3) {
+        const type = this.#pickOceanItemType();
+        const item = new WorldItem(type, new THREE.Vector3(x, 0, z));
+        this.scene.add(item.group);
+        this.items.push(item);
+        continue;
+      }
       const type = this.#pickItemType(x, z);
       const item = new WorldItem(type, new THREE.Vector3(x, y, z));
       this.scene.add(item.group);
@@ -251,7 +293,7 @@ class ItemManager {
   clearAll() {
     for (const item of this.items) item.removeFrom(this.scene);
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0 };
   }
 }
 

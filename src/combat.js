@@ -67,6 +67,9 @@ export class Combat {
     this.itemBoneCount = document.getElementById('item-bone-count');
     this.itemMushroomCount = document.getElementById('item-mushroom-count');
     this.itemFeatherCount = document.getElementById('item-feather-count');
+    this.itemSeaweedCount = document.getElementById('item-seaweed-count');
+    this.itemJellyfisharmCount = document.getElementById('item-jellyfisharm-count');
+    this.itemStarfisharmCount = document.getElementById('item-starfisharm-count');
 
     document.getElementById('btn-attack').addEventListener('click', () => this.#showAttackTypes());
     document.getElementById('btn-defend').addEventListener('click', () => this.#doDefend());
@@ -85,6 +88,9 @@ export class Combat {
     document.getElementById('btn-item-bone').addEventListener('click', () => this.#useItem('bone'));
     document.getElementById('btn-item-mushroom').addEventListener('click', () => this.#useItem('mushroom'));
     document.getElementById('btn-item-feather').addEventListener('click', () => this.#useItem('feather'));
+    document.getElementById('btn-item-seaweed').addEventListener('click', () => this.#useItem('seaweed'));
+    document.getElementById('btn-item-jellyfisharm').addEventListener('click', () => this.#useItem('jellyfisharm'));
+    document.getElementById('btn-item-starfisharm').addEventListener('click', () => this.#useItem('starfisharm'));
     document.getElementById('btn-item-back').addEventListener('click', () => this.#showMainActions());
   }
 
@@ -215,6 +221,9 @@ export class Combat {
     this.itemBoneCount.textContent = counts.bone;
     this.itemMushroomCount.textContent = counts.mushroom;
     this.itemFeatherCount.textContent = counts.feather;
+    this.itemSeaweedCount.textContent = counts.seaweed;
+    this.itemJellyfisharmCount.textContent = counts.jellyfisharm;
+    this.itemStarfisharmCount.textContent = counts.starfisharm;
     this.mainActions.style.display = 'none';
     this.attackTypes.style.display = 'none';
     this.itemTypes.style.display = 'flex';
@@ -364,6 +373,10 @@ export class Combat {
         const heal = item.minHeal + Math.floor(Math.random() * (item.maxHeal - item.minHeal + 1));
         this.foxHP = Math.min(this.foxMaxHP, this.foxHP + heal);
         this.#addLog(`Fox uses ${item.name} and recovers ${heal} HP!`);
+        if (item.atkMult) {
+          this.nextAtkMult = item.atkMult;
+          this.#addLog(`Fox feels renewed power!`);
+        }
         this.#updateHP();
         setTimeout(() => this.#enemyTurn(), 600);
         return;

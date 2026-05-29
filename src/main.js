@@ -753,6 +753,9 @@ function animate() {
         if (cnt.berry) items += ` 🫐${cnt.berry}`;
 if (cnt.bone) items += ` 🦴${cnt.bone}`;
 if (cnt.feather) items += ` 🪶${cnt.feather}`;
+if (cnt.seaweed) items += ` 🌱${cnt.seaweed}`;
+if (cnt.jellyfisharm) items += ` 🪼${cnt.jellyfisharm}`;
+if (cnt.starfisharm) items += ` ⭐${cnt.starfisharm}`;
 if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
         if (cnt.herb) items += ` 🌿${cnt.herb}`;
         const maxHP = getMaxHP(foxLevel);
