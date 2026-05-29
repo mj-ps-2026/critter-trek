@@ -919,12 +919,12 @@ export class FaunaManager {
     const plains = Math.max(0, 1 - desert - forest - tundra - swamp - crystal - canyon - badlands - mountain) * 0.5;
 
     if (crystal > 0.3) return this.#weightedPick([['glowbug', 1], ['deer', 3], ['rabbit', 5]]);
-    if (swamp > 0.3) return this.#weightedPick([['frog', 5], ['heron', 1], ['deer', 2], ['bear', 1]]);
-    if (canyon > 0.2) return this.#weightedPick([['goat', 3], ['rabbit', 5]]);
+    if (swamp > 0.3) return this.#weightedPick([['frog', 5], ['heron', 1], ['deer', 3], ['bear', 1]]);
+    if (canyon > 0.2) return this.#weightedPick([['goat', 1], ['rabbit', 5]]);
     if (badlands > 0.2) return this.#weightedPick([['snake', 3], ['lizard', 4], ['rabbit', 5]]);
     if (desert > 0.3) return this.#weightedPick([['lizard', 4], ['jackrabbit', 3], ['rabbit', 5]]);
     if (tundra > 0.3) return this.#weightedPick([['arcticfox', 3], ['rabbit', 5], ['deer', 2], ['bear', 1]]);
-    if (forest > 0.3) return this.#weightedPick([['deer', 3], ['rabbit', 5], ['owl', 2], ['bear', 1]]);
+    if (forest > 0.3) return this.#weightedPick([['deer', 3], ['rabbit', 5], ['owl', 1], ['bear', 1]]);
     if (plains > 0.15 || (mountain > 0.3 && mountain < 0.7)) {
       return this.#weightedPick([['bison', 1], ['deer', 3], ['rabbit', 5], ['lizard', 4]]);
     }
