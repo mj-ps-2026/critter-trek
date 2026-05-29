@@ -99,7 +99,7 @@ const ENEMY_TYPES = {
   },
 };
 
-const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, flatShading: true });
+const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, });
 
 export class Wolf {
   constructor(position, getHeight, typeId = 'wolf') {
@@ -287,7 +287,7 @@ export class Wolf {
 
     if (t.id === 'lavabeast') {
       const glowMat = new THREE.MeshStandardMaterial({
-        color: 0xFF4400, emissive: 0xFF2200, emissiveIntensity: 0.4, flatShading: true,
+        color: 0xFF4400, emissive: 0xFF2200, emissiveIntensity: 0.4,
       });
       for (let i = 0; i < 5; i++) {
         const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 4), glowMat);

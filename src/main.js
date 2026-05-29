@@ -27,7 +27,7 @@ console.log('[main.js] Combat imported');
 import { FaunaManager } from './fauna.js';
 console.log('[main.js] FaunaManager imported');
 
-import { ItemManager } from './items.js';
+import { ItemManager, ITEM_DEFS, CRAFTING_RECIPES } from './items.js';
 console.log('[main.js] ItemManager imported');
 
 import './style.css';
@@ -189,6 +189,31 @@ document.getElementById('biome-menu-close').addEventListener('click', () => {
   biomeMenu.style.display = 'none';
 });
 
+const craftingMenu = document.getElementById('crafting-menu');
+const craftingRecipesEl = document.getElementById('crafting-menu-recipes');
+document.getElementById('crafting-menu-close').addEventListener('click', () => {
+  craftingMenu.style.display = 'none';
+});
+
+function rebuildCraftingList() {
+  craftingRecipesEl.innerHTML = '';
+  for (const recipe of CRAFTING_RECIPES) {
+    const btn = document.createElement('button');
+    btn.className = 'craft-recipe';
+    const has = itemManager.canCraft(recipe);
+    btn.className = 'craft-recipe ' + (has ? 'ready' : 'locked');
+    const needs = Object.entries(recipe.input).map(([t, q]) => `${q} ${ITEM_DEFS[t].icon}`).join(' + ');
+    const out = ITEM_DEFS[recipe.output];
+    btn.innerHTML = `<span>${out.icon} ${recipe.label}</span><span class="craft-needs">${needs}</span>`;
+    if (has) {
+      btn.addEventListener('click', () => {
+        if (itemManager.craft(recipe)) rebuildCraftingList();
+      });
+    }
+    craftingRecipesEl.appendChild(btn);
+  }
+}
+
 // Use Clock despite deprecation warning - Timer needs extra update() calls
 const drinkBtn = document.getElementById('btn-drink');
 drinkBtn.addEventListener('click', () => { controls.drinkPressed = true; });
@@ -277,6 +302,14 @@ window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if (e.code === 'KeyR' && gameState === EXPLORE) {
     biomeMenu.style.display = biomeMenu.style.display === 'none' ? 'flex' : 'none';
+  }
+  if (e.code === 'KeyC' && gameState === EXPLORE) {
+    if (craftingMenu.style.display === 'none') {
+      rebuildCraftingList();
+      craftingMenu.style.display = 'flex';
+    } else {
+      craftingMenu.style.display = 'none';
+    }
   }
 });
 window.addEventListener('keyup', e => keys[e.code] = false);
@@ -656,6 +689,7 @@ function animate() {
         if (result === 'attacking') {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
+          craftingMenu.style.display = 'none';
           const td = wolf.typeDef;
           combat.start({
             hp: applyWaterBonus(Math.floor(td.hp * scaleLvl)), atk: Math.floor(td.atk * scaleLvl), def: Math.floor(td.def * scaleLvl),
@@ -674,6 +708,7 @@ function animate() {
         if (faunaAnimal.group.position.distanceTo(pos) < 0.8) {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
+          craftingMenu.style.display = 'none';
           const creature = faunaAnimal;
           combat.start({
             hp: applyWaterBonus(Math.floor(creature.hp * scaleLvl)), atk: Math.floor(creature.atk * scaleLvl), def: Math.floor(creature.def * scaleLvl),
@@ -756,6 +791,9 @@ if (cnt.feather) items += ` 🪶${cnt.feather}`;
 if (cnt.seaweed) items += ` 🌱${cnt.seaweed}`;
 if (cnt.jellyfisharm) items += ` 🪼${cnt.jellyfisharm}`;
 if (cnt.starfisharm) items += ` ⭐${cnt.starfisharm}`;
+if (cnt.animalsword) items += ` ⚔️${cnt.animalsword}`;
+if (cnt.animalpickaxe) items += ` ⛏️${cnt.animalpickaxe}`;
+if (cnt.animaltrident) items += ` 🔱${cnt.animaltrident}`;
 if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
         if (cnt.herb) items += ` 🌿${cnt.herb}`;
         const maxHP = getMaxHP(foxLevel);

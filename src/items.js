@@ -21,7 +21,16 @@ const ITEM_DEFS = {
   seaweed: { name: 'Seaweed', icon: '🌱', color: 0x2A7A3A, category: 'craft' },
   jellyfisharm: { name: 'Jellyfish Arm', icon: '🪼', flatDmg: 5, color: 0xAA55CC, category: 'weapon', ignoreDef: true },
   starfisharm: { name: 'Starfish Arm', icon: '⭐', minHeal: 10, maxHeal: 18, color: 0xFF8844, category: 'heal', atkMult: 1.3 },
+  animalsword: { name: 'Animal Sword', icon: '⚔️', minDmg: 7, maxDmg: 12, color: 0xE8DCC8, category: 'weapon' },
+  animalpickaxe: { name: 'Animal Pickaxe', icon: '⛏️', minDmg: 14, maxDmg: 20, color: 0x6A4A2A, category: 'weapon' },
+  animaltrident: { name: 'Animal Trident', icon: '🔱', minDmg: 8, maxDmg: 14, color: 0x4A7ACC, category: 'weapon', ignoreDef: true },
 };
+
+const CRAFTING_RECIPES = [
+  { input: { bone: 2, sharpstick: 1 }, output: 'animalsword', label: 'Animal Sword' },
+  { input: { bone: 3, rock: 2 }, output: 'animalpickaxe', label: 'Animal Pickaxe' },
+  { input: { sharpstick: 2, jellyfisharm: 1 }, output: 'animaltrident', label: 'Animal Trident' },
+];
 
 class WorldItem {
   constructor(type, position) {
@@ -34,7 +43,7 @@ class WorldItem {
 
   #build() {
     const info = ITEM_DEFS[this.type];
-    const mat = new THREE.MeshStandardMaterial({ color: info.color, roughness: 0.8, flatShading: true });
+    const mat = new THREE.MeshStandardMaterial({ color: info.color, roughness: 0.8 });
 
     if (this.type === 'stick') {
       const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.3, 5), mat);
@@ -116,6 +125,31 @@ class WorldItem {
       arm2.rotation.z = -0.5;
       arm2.rotation.y = 0.5;
       this.group.add(arm2);
+    } else if (this.type === 'animalsword') {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.25, 0.005), new THREE.MeshStandardMaterial({ color: 0xE8DCC8, roughness: 0.4 }));
+      blade.position.y = 0.14;
+      this.group.add(blade);
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.06, 5), new THREE.MeshStandardMaterial({ color: 0x5C3D1A, roughness: 0.7 }));
+      handle.position.y = 0.03;
+      this.group.add(handle);
+    } else if (this.type === 'animalpickaxe') {
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.22, 5), new THREE.MeshStandardMaterial({ color: 0x5C3D1A, roughness: 0.7 }));
+      handle.rotation.z = 0.3;
+      handle.position.y = 0.06;
+      this.group.add(handle);
+      const head = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.08, 5), new THREE.MeshStandardMaterial({ color: 0xE8DCC8, roughness: 0.5 }));
+      head.position.set(0.04, 0.16, 0);
+      head.rotation.z = 0.3;
+      this.group.add(head);
+    } else if (this.type === 'animaltrident') {
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.25, 5), new THREE.MeshStandardMaterial({ color: 0x6B3E1C, roughness: 0.7 }));
+      shaft.position.y = 0.06;
+      this.group.add(shaft);
+      for (const s of [-1, 0, 1]) {
+        const tine = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.08, 4), new THREE.MeshStandardMaterial({ color: 0x4A7ACC, roughness: 0.4 }));
+        tine.position.set(s * 0.025, 0.2, 0);
+        this.group.add(tine);
+      }
     } else {
       const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07 + Math.random() * 0.04), mat);
       mesh.position.y = 0.04;
@@ -142,7 +176,7 @@ class ItemManager {
     this.getHeight = getHeight;
     this.getBiomeInfo = getBiomeInfo;
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0, animalsword: 0, animalpickaxe: 0, animaltrident: 0 };
   }
 
   #smoothstep(t, lo, hi) {
@@ -290,11 +324,27 @@ class ItemManager {
     return { ...this.inventory };
   }
 
+  canCraft(recipe) {
+    for (const [type, qty] of Object.entries(recipe.input)) {
+      if ((this.inventory[type] || 0) < qty) return false;
+    }
+    return true;
+  }
+
+  craft(recipe) {
+    if (!this.canCraft(recipe)) return false;
+    for (const [type, qty] of Object.entries(recipe.input)) {
+      this.inventory[type] -= qty;
+    }
+    this.inventory[recipe.output] = (this.inventory[recipe.output] || 0) + 1;
+    return true;
+  }
+
   clearAll() {
     for (const item of this.items) item.removeFrom(this.scene);
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0, animalsword: 0, animalpickaxe: 0, animaltrident: 0 };
   }
 }
 
-export { WorldItem, ItemManager, ITEM_DEFS };
+export { WorldItem, ItemManager, ITEM_DEFS, CRAFTING_RECIPES };

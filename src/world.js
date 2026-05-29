@@ -353,7 +353,6 @@ class Chunk {
       vertexColors: true,
       roughness: 0.85,
       metalness: 0,
-      flatShading: true,
     });
 
     const mesh = new THREE.Mesh(geo, mat);
@@ -733,9 +732,9 @@ function createPineTree(rng) {
 
   const layers = 3 + Math.floor(rng() * 3);
   const greens = [
-    new THREE.MeshStandardMaterial({ color: 0x1B5E20, roughness: 0.8, flatShading: true }),
-    new THREE.MeshStandardMaterial({ color: 0x2E7D32, roughness: 0.8, flatShading: true }),
-    new THREE.MeshStandardMaterial({ color: 0x388E3C, roughness: 0.8, flatShading: true }),
+    new THREE.MeshStandardMaterial({ color: 0x1B5E20, roughness: 0.8, }),
+    new THREE.MeshStandardMaterial({ color: 0x2E7D32, roughness: 0.8, }),
+    new THREE.MeshStandardMaterial({ color: 0x388E3C, roughness: 0.8, }),
   ];
 
   for (let i = 0; i < layers; i++) {
@@ -763,7 +762,6 @@ function createOakTree(rng) {
   const canopyMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.25 + rng() * 0.08, 0.45, 0.22 + rng() * 0.1),
     roughness: 0.8,
-    flatShading: true,
   });
 
   const main = new THREE.Mesh(new THREE.SphereGeometry(canopyR, 7, 7), canopyMat);
@@ -793,8 +791,8 @@ function createSwampTree(rng) {
   trunk.position.y = h * 0.25;
   g.add(trunk);
 
-  const capMat = new THREE.MeshStandardMaterial({ color: 0x2a4a2a, roughness: 0.8, flatShading: true });
-  const darkMat = new THREE.MeshStandardMaterial({ color: 0x1a3a1a, roughness: 0.8, flatShading: true });
+  const capMat = new THREE.MeshStandardMaterial({ color: 0x2a4a2a, roughness: 0.8, });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x1a3a1a, roughness: 0.8, });
 
   const cap = new THREE.Mesh(new THREE.SphereGeometry(1.2 + rng() * 0.6, 6, 6), capMat);
   cap.position.y = h * 0.5 + 0.6;
@@ -813,7 +811,7 @@ function createSwampTree(rng) {
 
 function createCactus(rng) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.8, flatShading: true });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x2d5a27, roughness: 0.8, });
   const h = 3 + rng() * 5;
   const main = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.25, h, 6), mat);
   main.position.y = h / 2;
@@ -841,7 +839,7 @@ function createPalmTree(rng) {
   trunk.castShadow = true;
   g.add(trunk);
 
-  const frondMat = new THREE.MeshStandardMaterial({ color: 0x2A6B2A, roughness: 0.7, flatShading: true });
+  const frondMat = new THREE.MeshStandardMaterial({ color: 0x2A6B2A, roughness: 0.7, });
   const fronds = 5 + Math.floor(rng() * 4);
   for (let i = 0; i < fronds; i++) {
     const a = (i / fronds) * Math.PI * 2 + rng() * 0.2;
@@ -888,7 +886,6 @@ function createCherryTree(rng) {
   const canopyMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.92, 0.5, 0.5 + rng() * 0.15),
     roughness: 0.7,
-    flatShading: true,
   });
   const canopy = new THREE.Mesh(new THREE.SphereGeometry(2 + rng() * 1.5, 7, 7), canopyMat);
   canopy.position.y = trunkH + 1.5;
@@ -898,7 +895,6 @@ function createCherryTree(rng) {
   const subMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.92, 0.4, 0.45 + rng() * 0.1),
     roughness: 0.7,
-    flatShading: true,
   });
   for (let i = 0; i < 3; i++) {
     const a = (i / 3) * Math.PI * 2 + rng() * 0.3;
@@ -911,7 +907,7 @@ function createCherryTree(rng) {
 
 function createSaguaro(rng) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x2A6B2A, roughness: 0.8, flatShading: true });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x2A6B2A, roughness: 0.8, });
   const h = 4 + rng() * 6;
   const main = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, h, 6), mat);
   main.position.y = h / 2;
@@ -942,7 +938,6 @@ function createMushroomTree(rng) {
   const capMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(rng() * 0.1 + 0.05, 0.6, 0.3 + rng() * 0.2),
     roughness: 0.7,
-    flatShading: true,
   });
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.8 + rng() * 0.6, 6, 6), capMat);
   cap.scale.set(1, 0.5, 1);
@@ -970,7 +965,6 @@ function createCrystalSpire(rng) {
     metalness: 0.6,
     emissive: new THREE.Color().setHSL(hue * 0.3 + 0.6, 0.6, 0.1),
     emissiveIntensity: 0.3,
-    flatShading: true,
   });
   const h = 2 + rng() * 6;
   const spire = new THREE.Mesh(new THREE.ConeGeometry(0.2 + rng() * 0.3, h, 5), mat);
@@ -990,20 +984,17 @@ function createBush(rng, isDry, isCrystal) {
       roughness: 0.3,
       metalness: 0.4,
       emissive: new THREE.Color().setHSL(hue, 0.5, 0.05),
-      flatShading: true,
     });
   } else if (isDry) {
     mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color().setHSL(0.08 + rng() * 0.05, 0.3, 0.3 + rng() * 0.15),
       roughness: 0.8,
-      flatShading: true,
     });
   } else {
     const hue = 0.22 + rng() * 0.12;
     mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color().setHSL(hue, 0.45, 0.18 + rng() * 0.15),
       roughness: 0.8,
-      flatShading: true,
     });
   }
   const n = 2 + Math.floor(rng() * 3);
@@ -1025,7 +1016,6 @@ function createRock(rng, isTundra = false) {
     color: new THREE.Color().setHSL(hue, isTundra ? 0.1 : 0, lightness),
     roughness: isTundra ? 0.4 : 0.9,
     metalness: isTundra ? 0.2 : 0,
-    flatShading: true,
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI);
@@ -1063,7 +1053,6 @@ function createRockPillar(rng) {
   const mat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.08, 0.15, 0.35 + rng() * 0.2),
     roughness: 0.9,
-    flatShading: true,
   });
   const geo = new THREE.CylinderGeometry(0.2 + rng() * 0.2, 0.35 + rng() * 0.3, h, 6);
   const mesh = new THREE.Mesh(geo, mat);
@@ -1078,7 +1067,6 @@ function createHoodoo(rng) {
   const mat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.07 + rng() * 0.04, 0.3, 0.3 + rng() * 0.2),
     roughness: 0.9,
-    flatShading: true,
   });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.25 + rng() * 0.15, 0.4 + rng() * 0.3, h * 0.6, 6), mat);
   base.position.y = h * 0.3;
@@ -1088,7 +1076,6 @@ function createHoodoo(rng) {
   const topMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.08 + rng() * 0.03, 0.25, 0.4 + rng() * 0.15),
     roughness: 0.85,
-    flatShading: true,
   });
   const top = new THREE.Mesh(new THREE.CylinderGeometry(0.3 + rng() * 0.2, 0.2 + rng() * 0.1, h * 0.4, 6), topMat);
   top.position.y = h * 0.6 + h * 0.2;
@@ -1104,7 +1091,6 @@ function createDryScrub(rng) {
   const mat = new THREE.MeshStandardMaterial({
     color: new THREE.Color().setHSL(0.08 + rng() * 0.05, 0.2, 0.25 + rng() * 0.1),
     roughness: 0.9,
-    flatShading: true,
   });
   const n = 2 + Math.floor(rng() * 3);
   for (let i = 0; i < n; i++) {
@@ -1125,7 +1111,6 @@ function createSnowDrift(rng) {
     color: new THREE.Color().setHSL(0.6, 0.05, 0.82 + rng() * 0.12),
     roughness: 0.6,
     metalness: 0,
-    flatShading: true,
   });
   return new THREE.Mesh(geo, mat);
 }
@@ -1138,7 +1123,6 @@ function createSeashell(rng) {
     color: new THREE.Color().setHSL(hue, 0.3, 0.45 + rng() * 0.2),
     roughness: 0.7,
     metalness: 0.3,
-    flatShading: true,
   });
   const shell = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.04, 5), mat);
   shell.scale.set(1, 1, 0.6);

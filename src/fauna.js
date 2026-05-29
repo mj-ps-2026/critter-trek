@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, flatShading: true });
+const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, });
 
 function smoothstep(t, lo, hi) {
   t = Math.max(0, Math.min(1, (t - lo) / (hi - lo)));
@@ -330,7 +330,6 @@ class FaunaAnimal {
       emissiveIntensity: 0.5,
       roughness: 0.3,
       metalness: 0.2,
-      flatShading: true,
     });
 
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 5), bodyMat);
@@ -340,7 +339,7 @@ class FaunaAnimal {
     for (const s of [-1, 1]) {
       const wing = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.06, 4), new THREE.MeshStandardMaterial({
         color: new THREE.Color().setHSL(hue, 0.3, 0.6),
-        transparent: true, opacity: 0.5, flatShading: true,
+        transparent: true, opacity: 0.5,
       }));
       wing.position.set(s * 0.1, 0.1, 0);
       wing.rotation.z = s * 0.3;
@@ -351,7 +350,6 @@ class FaunaAnimal {
       color: new THREE.Color().setHSL(hue, 0.8, 0.6),
       emissive: new THREE.Color().setHSL(hue, 0.8, 0.4),
       emissiveIntensity: 0.8,
-      flatShading: true,
     }));
     glow.position.set(0, 0.12, -0.08);
     g.add(glow);
@@ -649,12 +647,10 @@ class FaunaAnimal {
       emissive: new THREE.Color().setHSL(hue, sat * 0.5, light * 0.2),
       emissiveIntensity: 0.4,
       roughness: 0.4,
-      flatShading: true,
     });
     const finMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color().setHSL(hue, sat * 0.6, light * 0.5),
       roughness: 0.6,
-      flatShading: true,
     });
 
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 7), bodyMat);
@@ -728,7 +724,6 @@ class FaunaAnimal {
       opacity: 0.5,
       roughness: 0.2,
       metalness: 0.1,
-      flatShading: true,
     });
 
     const bell = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), bodyMat);

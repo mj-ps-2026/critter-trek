@@ -70,6 +70,9 @@ export class Combat {
     this.itemSeaweedCount = document.getElementById('item-seaweed-count');
     this.itemJellyfisharmCount = document.getElementById('item-jellyfisharm-count');
     this.itemStarfisharmCount = document.getElementById('item-starfisharm-count');
+    this.itemAnimalswordCount = document.getElementById('item-animalsword-count');
+    this.itemAnimalpickaxeCount = document.getElementById('item-animalpickaxe-count');
+    this.itemAnimaltridentCount = document.getElementById('item-animaltrident-count');
 
     document.getElementById('btn-attack').addEventListener('click', () => this.#showAttackTypes());
     document.getElementById('btn-defend').addEventListener('click', () => this.#doDefend());
@@ -91,6 +94,9 @@ export class Combat {
     document.getElementById('btn-item-seaweed').addEventListener('click', () => this.#useItem('seaweed'));
     document.getElementById('btn-item-jellyfisharm').addEventListener('click', () => this.#useItem('jellyfisharm'));
     document.getElementById('btn-item-starfisharm').addEventListener('click', () => this.#useItem('starfisharm'));
+    document.getElementById('btn-item-animalsword').addEventListener('click', () => this.#useItem('animalsword'));
+    document.getElementById('btn-item-animalpickaxe').addEventListener('click', () => this.#useItem('animalpickaxe'));
+    document.getElementById('btn-item-animaltrident').addEventListener('click', () => this.#useItem('animaltrident'));
     document.getElementById('btn-item-back').addEventListener('click', () => this.#showMainActions());
   }
 
@@ -224,6 +230,9 @@ export class Combat {
     this.itemSeaweedCount.textContent = counts.seaweed;
     this.itemJellyfisharmCount.textContent = counts.jellyfisharm;
     this.itemStarfisharmCount.textContent = counts.starfisharm;
+    this.itemAnimalswordCount.textContent = counts.animalsword;
+    this.itemAnimalpickaxeCount.textContent = counts.animalpickaxe;
+    this.itemAnimaltridentCount.textContent = counts.animaltrident;
     this.mainActions.style.display = 'none';
     this.attackTypes.style.display = 'none';
     this.itemTypes.style.display = 'flex';
