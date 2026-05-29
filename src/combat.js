@@ -66,6 +66,7 @@ export class Combat {
     this.itemBerryCount = document.getElementById('item-berry-count');
     this.itemBoneCount = document.getElementById('item-bone-count');
     this.itemMushroomCount = document.getElementById('item-mushroom-count');
+    this.itemFeatherCount = document.getElementById('item-feather-count');
 
     document.getElementById('btn-attack').addEventListener('click', () => this.#showAttackTypes());
     document.getElementById('btn-defend').addEventListener('click', () => this.#doDefend());
@@ -83,6 +84,7 @@ export class Combat {
     document.getElementById('btn-item-berry').addEventListener('click', () => this.#useItem('berry'));
     document.getElementById('btn-item-bone').addEventListener('click', () => this.#useItem('bone'));
     document.getElementById('btn-item-mushroom').addEventListener('click', () => this.#useItem('mushroom'));
+    document.getElementById('btn-item-feather').addEventListener('click', () => this.#useItem('feather'));
     document.getElementById('btn-item-back').addEventListener('click', () => this.#showMainActions());
   }
 
@@ -212,6 +214,7 @@ export class Combat {
     this.itemBerryCount.textContent = counts.berry;
     this.itemBoneCount.textContent = counts.bone;
     this.itemMushroomCount.textContent = counts.mushroom;
+    this.itemFeatherCount.textContent = counts.feather;
     this.mainActions.style.display = 'none';
     this.attackTypes.style.display = 'none';
     this.itemTypes.style.display = 'flex';

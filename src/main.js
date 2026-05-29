@@ -751,8 +751,9 @@ function animate() {
         if (cnt.sharpstick) items += ` 🗡️${cnt.sharpstick}`;
         if (cnt.cactusneedle) items += ` 🌵${cnt.cactusneedle}`;
         if (cnt.berry) items += ` 🫐${cnt.berry}`;
-        if (cnt.bone) items += ` 🦴${cnt.bone}`;
-        if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
+if (cnt.bone) items += ` 🦴${cnt.bone}`;
+if (cnt.feather) items += ` 🪶${cnt.feather}`;
+if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
         if (cnt.herb) items += ` 🌿${cnt.herb}`;
         const maxHP = getMaxHP(foxLevel);
         const nextXP = xpForLevel(foxLevel);

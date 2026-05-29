@@ -17,6 +17,7 @@ const ITEM_DEFS = {
   berry: { name: 'Berry', icon: '🫐', minHeal: 3, maxHeal: 7, color: 0xAA3377, category: 'heal' },
   bone: { name: 'Bone', icon: '🦴', minDmg: 5, maxDmg: 10, color: 0xE8DCC8, category: 'weapon' },
   mushroom: { name: 'Mushroom', icon: '🍄', atkMult: 1.5, color: 0xCC4444, category: 'buff' },
+  feather: { name: 'Feather', icon: '🪶', color: 0xE8E0E0, category: 'craft' },
 };
 
 class WorldItem {
@@ -77,6 +78,15 @@ class WorldItem {
       cap.scale.set(1, 0.5, 1);
       cap.position.y = 0.06;
       this.group.add(cap);
+    } else if (this.type === 'feather') {
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, 0.2, 4), new THREE.MeshStandardMaterial({ color: 0xD0C8C8, roughness: 0.6 }));
+      shaft.rotation.z = 0.3;
+      shaft.position.y = 0.02;
+      this.group.add(shaft);
+      const vane = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.002), mat);
+      vane.position.set(-0.02, 0.06, 0);
+      vane.rotation.z = 0.3;
+      this.group.add(vane);
     } else {
       const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07 + Math.random() * 0.04), mat);
       mesh.position.y = 0.04;
@@ -103,7 +113,7 @@ class ItemManager {
     this.getHeight = getHeight;
     this.getBiomeInfo = getBiomeInfo;
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0 };
   }
 
   #smoothstep(t, lo, hi) {
@@ -138,12 +148,13 @@ class ItemManager {
     }
 
     if (forest > 0.3 || region === 'swamp') {
-      if (r < 0.24) return 'stick';
-      if (r < 0.46) return 'sharpstick';
-      if (r < 0.64) return 'herb';
-      if (r < 0.77) return 'berry';
+      if (r < 0.22) return 'stick';
+      if (r < 0.42) return 'sharpstick';
+      if (r < 0.58) return 'herb';
+      if (r < 0.70) return 'berry';
+      if (r < 0.78) return 'feather';
       if (r < 0.88) return 'mushroom';
-      if (r < 0.98) return 'rock';
+      if (r < 0.97) return 'rock';
       return 'bone';
     }
 
@@ -157,31 +168,34 @@ class ItemManager {
     }
 
     if (region === 'tundra') {
-      if (r < 0.32) return 'rock';
-      if (r < 0.52) return 'stick';
-      if (r < 0.67) return 'sharpstick';
-      if (r < 0.82) return 'bone';
-      if (r < 0.92) return 'herb';
+      if (r < 0.28) return 'rock';
+      if (r < 0.46) return 'stick';
+      if (r < 0.58) return 'sharpstick';
+      if (r < 0.68) return 'bone';
+      if (r < 0.78) return 'feather';
+      if (r < 0.88) return 'herb';
       return 'berry';
     }
 
     if (region === 'crystal') {
-      if (r < 0.22) return 'mushroom';
-      if (r < 0.42) return 'herb';
-      if (r < 0.60) return 'stick';
-      if (r < 0.75) return 'berry';
-      if (r < 0.87) return 'sharpstick';
-      if (r < 0.95) return 'rock';
+      if (r < 0.18) return 'mushroom';
+      if (r < 0.34) return 'herb';
+      if (r < 0.48) return 'stick';
+      if (r < 0.60) return 'berry';
+      if (r < 0.70) return 'feather';
+      if (r < 0.82) return 'sharpstick';
+      if (r < 0.92) return 'rock';
       return 'bone';
     }
 
-    if (r < 0.22) return 'stick';
-    if (r < 0.40) return 'sharpstick';
-    if (r < 0.55) return 'berry';
-    if (r < 0.69) return 'rock';
-    if (r < 0.83) return 'cactusneedle';
-    if (r < 0.93) return 'herb';
-    if (r < 0.98) return 'bone';
+    if (r < 0.18) return 'stick';
+    if (r < 0.34) return 'sharpstick';
+    if (r < 0.46) return 'berry';
+    if (r < 0.56) return 'rock';
+    if (r < 0.66) return 'feather';
+    if (r < 0.78) return 'cactusneedle';
+    if (r < 0.88) return 'herb';
+    if (r < 0.95) return 'bone';
     return 'mushroom';
   }
 
@@ -237,7 +251,7 @@ class ItemManager {
   clearAll() {
     for (const item of this.items) item.removeFrom(this.scene);
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0 };
   }
 }
 
