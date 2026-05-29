@@ -98,9 +98,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(black));
-      eye.position.set(s * 0.1, 0.48, -0.39);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.1, 0.48, -0.39);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), mat(black));
+      pupil.position.set(s * 0.1, 0.48, -0.41);
+      g.add(pupil);
     }
 
     const tail = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 4), mat(white));
@@ -150,9 +153,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(0x111111));
-      eye.position.set(s * 0.1, 1.15, -1.05);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.1, 1.15, -1.05);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), mat(0x111111));
+      pupil.position.set(s * 0.1, 1.15, -1.07);
+      g.add(pupil);
     }
 
     const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 4, 4), mat(white));
@@ -184,9 +190,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(yellow));
-      eye.position.set(s * 0.04, 0.12, -0.34);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(yellow));
+      white.position.set(s * 0.04, 0.12, -0.34);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), mat(0x111111));
+      pupil.position.set(s * 0.04, 0.12, -0.36);
+      g.add(pupil);
     }
   }
 
@@ -215,9 +224,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0x111111));
-      eye.position.set(s * 0.12, 1.15, -1.08);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.12, 1.15, -1.08);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), mat(0x111111));
+      pupil.position.set(s * 0.12, 1.15, -1.1);
+      g.add(pupil);
     }
 
     for (const [x, z] of [[0.45, 0.6], [-0.45, 0.6], [0.45, -0.6], [-0.45, -0.6]]) {
@@ -252,9 +264,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
-      eye.position.set(s * 0.075, 0.46, -0.5);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.075, 0.46, -0.5);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), mat(black));
+      pupil.position.set(s * 0.075, 0.46, -0.52);
+      g.add(pupil);
     }
 
     for (const [x, z] of [[0.12, 0.25], [-0.12, 0.25], [0.12, -0.25], [-0.12, -0.25]]) {
@@ -342,9 +357,12 @@ class FaunaAnimal {
     g.add(glow);
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), mat(0x111111));
-      eye.position.set(s * 0.02, 0.09, -0.07);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), mat(0xFFFFFF));
+      white.position.set(s * 0.02, 0.09, -0.07);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.007, 4, 4), mat(0x111111));
+      pupil.position.set(s * 0.02, 0.09, -0.075);
+      g.add(pupil);
     }
   }
 
@@ -379,9 +397,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
-      eye.position.set(s * 0.07, 0.76, -0.65);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.07, 0.76, -0.65);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), mat(black));
+      pupil.position.set(s * 0.07, 0.76, -0.67);
+      g.add(pupil);
     }
 
     for (const [x, z] of [[0.2, 0.3], [-0.2, 0.3], [0.2, -0.3], [-0.2, -0.3]]) {
@@ -423,9 +444,12 @@ class FaunaAnimal {
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(black));
-      eye.position.set(s * 0.025, 0.05, -0.29);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(0xFFFFFF));
+      white.position.set(s * 0.025, 0.05, -0.29);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 4, 4), mat(black));
+      pupil.position.set(s * 0.025, 0.05, -0.3);
+      g.add(pupil);
     }
   }
 
@@ -502,9 +526,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0x111111));
-      eye.position.set(s * 0.12, 0.78, -1.15);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.12, 0.78, -1.15);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), mat(0x111111));
+      pupil.position.set(s * 0.12, 0.78, -1.17);
+      g.add(pupil);
     }
 
     for (const [x, z] of [[0.4, 0.6], [-0.4, 0.6], [0.4, -0.6], [-0.4, -0.6]]) {
@@ -546,9 +573,12 @@ class FaunaAnimal {
     g.add(beak);
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(black));
-      eye.position.set(s * 0.025, 0.96, -0.32);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(0xFFFFFF));
+      white.position.set(s * 0.025, 0.96, -0.32);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 4, 4), mat(black));
+      pupil.position.set(s * 0.025, 0.96, -0.33);
+      g.add(pupil);
     }
 
     for (const [x, z] of [[0.06, 0.22], [-0.06, 0.22]]) {
@@ -590,9 +620,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
-      eye.position.set(s * 0.07, 0.4, -0.34);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(0xFFFFFF));
+      white.position.set(s * 0.07, 0.4, -0.34);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), mat(black));
+      pupil.position.set(s * 0.07, 0.4, -0.36);
+      g.add(pupil);
     }
 
     for (const [x, z] of [[0.1, 0.12], [-0.1, 0.12], [0.14, -0.12], [-0.14, -0.12]]) {
@@ -641,9 +674,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.02, 4, 4), mat(0x111111));
-      eye.position.set(s * 0.06, 0.02, -0.14);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.02, 4, 4), mat(0xFFFFFF));
+      white.position.set(s * 0.06, 0.02, -0.14);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), mat(0x111111));
+      pupil.position.set(s * 0.06, 0.02, -0.15);
+      g.add(pupil);
     }
   }
 
@@ -674,9 +710,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 4), mat(0x111111));
-      eye.position.set(s * 0.06, 0, -0.18);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 4), mat(0xFFFFFF));
+      white.position.set(s * 0.06, 0, -0.18);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(0x111111));
+      pupil.position.set(s * 0.06, 0, -0.19);
+      g.add(pupil);
     }
   }
 
@@ -706,9 +745,12 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), mat(0x111111));
-      eye.position.set(s * 0.04, 0.04, -0.1);
-      g.add(eye);
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), mat(0xFFFFFF));
+      white.position.set(s * 0.04, 0.04, -0.1);
+      g.add(white);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 5), mat(0x111111));
+      pupil.position.set(s * 0.04, 0.04, -0.11);
+      g.add(pupil);
     }
   }
 
