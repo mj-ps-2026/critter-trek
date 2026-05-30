@@ -21,9 +21,9 @@ const ITEM_DEFS = {
   seaweed: { name: 'Seaweed', icon: '🌱', color: 0x2A7A3A, category: 'craft' },
   jellyfisharm: { name: 'Jellyfish Arm', icon: '🪼', flatDmg: 5, color: 0xAA55CC, category: 'weapon', ignoreDef: true },
   starfisharm: { name: 'Starfish Arm', icon: '⭐', minHeal: 10, maxHeal: 18, color: 0xFF8844, category: 'heal', atkMult: 1.3 },
-  animalsword: { name: 'Animal Sword', icon: '⚔️', minDmg: 7, maxDmg: 12, color: 0xE8DCC8, category: 'weapon' },
-  animalpickaxe: { name: 'Animal Pickaxe', icon: '⛏️', minDmg: 14, maxDmg: 20, color: 0x6A4A2A, category: 'weapon' },
-  animaltrident: { name: 'Animal Trident', icon: '🔱', minDmg: 8, maxDmg: 14, color: 0x4A7ACC, category: 'weapon', ignoreDef: true },
+  animalsword: { name: 'Animal Sword', icon: '⚔️', minDmg: 12, maxDmg: 20, color: 0xE8DCC8, category: 'weapon' },
+  animalpickaxe: { name: 'Animal Pickaxe', icon: '⛏️', minDmg: 15, maxDmg: 24, color: 0x6A4A2A, category: 'weapon' },
+  animaltrident: { name: 'Animal Trident', icon: '🔱', flatDmg: 18, color: 0x4A7ACC, category: 'weapon', ignoreDef: true },
 };
 
 const CRAFTING_RECIPES = [
