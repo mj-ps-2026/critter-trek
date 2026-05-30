@@ -1,10 +1,51 @@
 import * as THREE from 'three';
+import { furMaterial, smoothDisplace, makeEye } from './realism.js';
 
 export class Animal {
   constructor() {
     this.group = new THREE.Group();
     this.clock = 0;
     this.buildFox();
+    this.#applyRealism();
+  }
+
+  #applyRealism() {
+    this.group.traverse(child => {
+      if (child.isMesh && child.geometry) {
+        const hex = child.material.color.getHex();
+        const isBodyPart = hex !== 0x111111 && hex !== 0xFFFFFF;
+        if (isBodyPart) {
+          const variation = 12 + Math.random() * 16;
+          const newMat = furMaterial(hex, { variation, roughness: 0.85 });
+          child.material.dispose();
+          child.material = newMat;
+          smoothDisplace(child.geometry, 0.02);
+        }
+      }
+    });
+
+    // Replace eyes with realistic versions
+    const meshes = [];
+    this.group.traverse(c => { if (c.isMesh) meshes.push(c); });
+    const whiteEyes = meshes.filter(m =>
+      m.geometry.type === 'SphereGeometry' && m.material.color.getHex() === 0xFFFFFF && m.geometry.parameters.radius < 0.05
+    );
+    for (const we of whiteEyes) {
+      const pupil = meshes.find(m =>
+        m !== we && m.geometry.type === 'SphereGeometry' && m.material.color.getHex() === 0x111111 &&
+        m.position.distanceTo(we.position) < 0.06
+      );
+      if (!pupil) continue;
+      const parent = we.parent;
+      const pos = we.position.clone();
+      const s = we.geometry.parameters.radius * 0.5;
+      const eye = makeEye(0x8B5E3C, 0x111111, s);
+      eye.position.copy(pos);
+      eye.rotation.y = pos.x > 0 ? -0.1 : 0.1;
+      parent.add(eye);
+      parent.remove(we); we.geometry.dispose(); we.material.dispose();
+      parent.remove(pupil); pupil.geometry.dispose(); pupil.material.dispose();
+    }
   }
 
   buildFox() {

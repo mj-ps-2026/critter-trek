@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { furMaterial, realisticifyGroup, makeEye, smoothDisplace } from './realism.js';
 
 const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, });
 
@@ -51,6 +52,82 @@ class FaunaAnimal {
     const h = getHeight(position.x, position.z);
     this.group.position.set(position.x, this.waterCreature ? position.y : this.amphibious && h < 0.3 ? 0 : h, position.z);
     this.#build();
+    this.#applyRealism();
+  }
+
+  #applyRealism() {
+    const group = this.group;
+    // First pass: replace eye meshes (small white/black spheres near each other)
+    const meshes = [];
+    group.traverse(c => { if (c.isMesh) meshes.push(c); });
+
+    // Find eye pairs: small white sphere + small dark sphere close together
+    const whiteMatches = meshes.filter(m =>
+      m.geometry.type === 'SphereGeometry' &&
+      m.material.color.getHex() >= 0xEEEEEE &&
+      m.geometry.parameters.radius < 0.05
+    );
+
+    for (const wm of whiteMatches) {
+      // Find nearby dark pupil
+      const pupil = meshes.find(m =>
+        m !== wm &&
+        m.geometry.type === 'SphereGeometry' &&
+        m.material.color.getHex() <= 0x333333 &&
+        m.position.distanceTo(wm.position) < 0.06
+      );
+      if (!pupil) continue;
+
+      const parent = wm.parent;
+      const pos = wm.position.clone();
+      const s = wm.geometry.parameters.radius * 0.5;
+
+      // Determine a plausible iris color based on animal type
+      let irisColor = 0x6B4226; // default brown
+      if (this.type === 'frog' || this.type === 'lizard' || this.type === 'snake') irisColor = 0xCCAA33;
+      if (this.type === 'fish') irisColor = 0x224488;
+      if (this.type === 'owl') irisColor = 0xEEAA22;
+      if (this.type === 'glowbug') irisColor = 0x88FF44;
+
+      const eyeGroup = makeEye(irisColor, 0x111111, s);
+      eyeGroup.position.copy(pos);
+      // Rotate eye to face outward
+      eyeGroup.rotation.y = pos.x > 0 ? -0.1 : 0.1;
+      parent.add(eyeGroup);
+
+      // Remove old eye meshes
+      parent.remove(wm);
+      parent.remove(pupil);
+      wm.geometry.dispose();
+      wm.material.dispose();
+      if (pupil) { pupil.geometry.dispose(); pupil.material.dispose(); }
+    }
+
+    // Second pass: apply fur textures and displacement to body parts
+    group.traverse(child => {
+      if (child.isMesh && child.geometry) {
+        const geo = child.geometry;
+        const rad = geo.parameters && (geo.parameters.radius || 0);
+        const radSeg = geo.parameters && (geo.parameters.radialSegments || 0);
+        // Only displace and fur-ify organic-looking parts (not tiny or special materials)
+        const colorHex = child.material.color.getHex();
+        const isBodyPart = rad > 0.03 || radSeg > 0;
+        const isSpecialColor = colorHex === 0xFFFFFF || colorHex <= 0x222222 || colorHex === 0x111111;
+
+        if (isBodyPart && !isSpecialColor) {
+          // Replace material with fur texture version
+          const variation = 12 + Math.random() * 16;
+          const newMat = furMaterial(colorHex, { variation, roughness: 0.85 });
+          child.material.dispose();
+          child.material = newMat;
+
+          // Subdivide via displacement for organic shape
+          if (geo.type) {
+            smoothDisplace(geo, 0.015 + Math.random() * 0.015);
+          }
+        }
+      }
+    });
   }
 
   #build() {
