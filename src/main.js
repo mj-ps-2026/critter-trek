@@ -111,6 +111,7 @@ scene.add(moonLight);
 
 console.log('[main.js] Step: stars');
 const stars = createStars(scene);
+const SAVE_KEY = 'crittertrek_save';
 
 console.log('[main.js] Step: chunk manager');
 const saved = loadGame();
@@ -281,6 +282,7 @@ const btnChestCollect = document.getElementById('btn-chest-collect');
 const btnChestClose = document.getElementById('btn-chest-close');
 const btnChestOpen = document.getElementById('btn-chest-open');
 let activeChestHouse = null;
+const btnBuyHouse = document.getElementById('btn-buy-house');
 
 function openChestUI(house) {
   if (!house.lootSpawned) house.openChest();
@@ -372,7 +374,6 @@ let drinkCooldown = 0;
 
 let currentHouse = null;
 let isPresident = false;
-const btnBuyHouse = document.getElementById('btn-buy-house');
 
 function checkPresident() {
   const cnt = itemManager.getCounts();
@@ -402,8 +403,6 @@ function getMaxHP(level) { return Math.floor(BASE_HP + (level - 1) * HP_PER_LEVE
 function getATK(level) { return BASE_ATK + (level - 1) * ATK_PER_LEVEL; }
 function getDEF(level) { return BASE_DEF + (level - 1) * DEF_PER_LEVEL; }
 function xpForLevel(level) { return Math.floor(LEVEL_XP_BASE * Math.pow(level, LEVEL_XP_SCALE)); }
-
-const SAVE_KEY = 'crittertrek_save';
 
 function saveGame() {
   try {

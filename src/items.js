@@ -23,7 +23,9 @@ const ITEM_DEFS = {
   starfisharm: { name: 'Starfish Arm', icon: '⭐', minHeal: 10, maxHeal: 18, color: 0xFF8844, category: 'heal', atkMult: 1.3 },
   animalsword: { name: 'Animal Sword', icon: '⚔️', minDmg: 12, maxDmg: 20, color: 0xE8DCC8, category: 'weapon' },
   animalpickaxe: { name: 'Animal Pickaxe', icon: '⛏️', minDmg: 15, maxDmg: 24, color: 0x6A4A2A, category: 'weapon' },
-  animaltrident: { name: 'Animal Trident', icon: '🔱', flatDmg: 18, color: 0x4A7ACC, category: 'weapon', ignoreDef: true },
+   animaltrident: { name: 'Animal Trident', icon: '🔱', flatDmg: 18, color: 0x4A7ACC, category: 'weapon', ignoreDef: true },
+  pinecone: { name: 'Pinecone', icon: '🫘', color: 0x6B4226, category: 'craft' },
+  acorn: { name: 'Acorn', icon: '🌰', color: 0x5C3D1A, category: 'craft' },
 };
 
 const CRAFTING_RECIPES = [
@@ -150,6 +152,28 @@ class WorldItem {
         tine.position.set(s * 0.025, 0.2, 0);
         this.group.add(tine);
       }
+    } else if (this.type === 'pinecone') {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 5), mat);
+      cone.position.y = 0.03;
+      this.group.add(cone);
+      for (let i = 0; i < 3; i++) {
+        const scale = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.035, 0.015), mat);
+        scale.position.set((Math.random() - 0.5) * 0.015, 0.015 + i * 0.015, (Math.random() - 0.5) * 0.015);
+        scale.rotation.x = 0.2 + i * 0.2;
+        this.group.add(scale);
+      }
+    } else if (this.type === 'acorn') {
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), new THREE.MeshStandardMaterial({ color: 0x7A5A2A, roughness: 0.8 }));
+      body.position.y = 0.015;
+      body.scale.set(1, 0.85, 1);
+      this.group.add(body);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.028, 5, 5), mat);
+      cap.position.y = 0.035;
+      cap.scale.set(1.1, 0.35, 1.1);
+      this.group.add(cap);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.005, 0.015, 4), new THREE.MeshStandardMaterial({ color: 0x5C3D1A, roughness: 0.8 }));
+      stem.position.y = 0.045;
+      this.group.add(stem);
     } else {
       const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.07 + Math.random() * 0.04), mat);
       mesh.position.y = 0.04;
@@ -176,7 +200,7 @@ class ItemManager {
     this.getHeight = getHeight;
     this.getBiomeInfo = getBiomeInfo;
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0, animalsword: 0, animalpickaxe: 0, animaltrident: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0, animalsword: 0, animalpickaxe: 0, animaltrident: 0, pinecone: 0, acorn: 0 };
   }
 
   #smoothstep(t, lo, hi) {
@@ -211,22 +235,25 @@ class ItemManager {
     }
 
     if (forest > 0.3 || region === 'swamp') {
-      if (r < 0.22) return 'stick';
-      if (r < 0.42) return 'sharpstick';
-      if (r < 0.58) return 'herb';
-      if (r < 0.70) return 'berry';
-      if (r < 0.78) return 'feather';
-      if (r < 0.88) return 'mushroom';
-      if (r < 0.97) return 'rock';
+      if (r < 0.18) return 'stick';
+      if (r < 0.34) return 'sharpstick';
+      if (r < 0.44) return 'herb';
+      if (r < 0.52) return 'berry';
+      if (r < 0.60) return 'pinecone';
+      if (r < 0.68) return 'acorn';
+      if (r < 0.76) return 'feather';
+      if (r < 0.84) return 'mushroom';
+      if (r < 0.91) return 'rock';
       return 'bone';
     }
 
     if (region === 'mountain') {
-      if (r < 0.30) return 'rock';
-      if (r < 0.52) return 'stick';
-      if (r < 0.70) return 'sharpstick';
-      if (r < 0.82) return 'herb';
-      if (r < 0.92) return 'berry';
+      if (r < 0.25) return 'rock';
+      if (r < 0.42) return 'stick';
+      if (r < 0.55) return 'sharpstick';
+      if (r < 0.65) return 'pinecone';
+      if (r < 0.78) return 'herb';
+      if (r < 0.88) return 'berry';
       return 'bone';
     }
 
@@ -251,14 +278,16 @@ class ItemManager {
       return 'bone';
     }
 
-    if (r < 0.18) return 'stick';
-    if (r < 0.34) return 'sharpstick';
-    if (r < 0.46) return 'berry';
-    if (r < 0.56) return 'rock';
-    if (r < 0.66) return 'feather';
-    if (r < 0.78) return 'cactusneedle';
+    if (r < 0.15) return 'stick';
+    if (r < 0.28) return 'sharpstick';
+    if (r < 0.38) return 'berry';
+    if (r < 0.46) return 'acorn';
+    if (r < 0.54) return 'pinecone';
+    if (r < 0.62) return 'rock';
+    if (r < 0.70) return 'feather';
+    if (r < 0.80) return 'cactusneedle';
     if (r < 0.88) return 'herb';
-    if (r < 0.95) return 'bone';
+    if (r < 0.94) return 'bone';
     return 'mushroom';
   }
 
@@ -354,7 +383,7 @@ class ItemManager {
   clearAll() {
     for (const item of this.items) item.removeFrom(this.scene);
     this.items = [];
-    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0, animalsword: 0, animalpickaxe: 0, animaltrident: 0 };
+    this.inventory = { stick: 0, rock: 0, sharpstick: 0, cactusneedle: 0, herb: 0, berry: 0, bone: 0, mushroom: 0, feather: 0, seaweed: 0, jellyfisharm: 0, starfisharm: 0, animalsword: 0, animalpickaxe: 0, animaltrident: 0, pinecone: 0, acorn: 0 };
   }
 }
 

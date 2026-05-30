@@ -546,6 +546,38 @@ class Chunk {
       }
     }
 
+    // Flowers
+    let flowerCount = 10;
+    let flowerTypes = ['tulip', 'daisy', 'rose', 'sunflower', 'bluebell', 'poppy', 'lavender', 'orchid', 'lily', 'daffodil'];
+    if (forest > 0.3) { flowerCount = 16 + Math.floor(rng() * 8); flowerTypes = ['tulip', 'rose', 'bluebell', 'orchid', 'lily', 'daffodil', 'daisy', 'lavender']; }
+    else if (swamp > 0.2) { flowerCount = 10 + Math.floor(rng() * 6); flowerTypes = ['lotus', 'orchid', 'lily', 'bluebell', 'tulip', 'rose']; }
+    else if (plains > 0.2) { flowerCount = 12 + Math.floor(rng() * 8); flowerTypes = ['daisy', 'poppy', 'sunflower', 'tulip', 'daffodil', 'lavender', 'marigold']; }
+    else if (tundra > 0.3) { flowerCount = 2 + Math.floor(rng() * 3); flowerTypes = ['alpineaster']; }
+    else if (bio.mountain > 0.4) { flowerCount = 4 + Math.floor(rng() * 4); flowerTypes = ['alpineaster', 'bluebell', 'daisy']; }
+    else if (desert > 0.2) { flowerCount = 2 + Math.floor(rng() * 3); flowerTypes = ['desertrose', 'marigold']; }
+    else if (canyon > 0.2) { flowerCount = 3 + Math.floor(rng() * 4); flowerTypes = ['desertrose', 'marigold', 'poppy']; }
+    else if (badlands > 0.15) { flowerCount = 3 + Math.floor(rng() * 3); flowerTypes = ['marigold', 'poppy', 'desertrose']; }
+    else if (crystal > 0.2) { flowerCount = 8 + Math.floor(rng() * 6); flowerTypes = ['orchid', 'lavender', 'bluebell', 'lily', 'tulip']; }
+
+    if (cityFactor > 0.1) {
+      flowerCount = Math.floor(flowerCount * (1 - Math.min(0.7, cityFactor)));
+    }
+
+    for (let i = 0; i < flowerCount; i++) {
+      const x = ox + rng() * CHUNK_SIZE;
+      const z = oz + rng() * CHUNK_SIZE;
+      const y = getHeight(x, z);
+      if (y > SEA_LEVEL + 0.3 && y < 8) {
+        const type = flowerTypes[Math.floor(rng() * flowerTypes.length)];
+        const flower = createFlower(rng, type, desert > 0.2 || badlands > 0.15);
+        flower.position.set(x, y, z);
+        const s = 0.6 + rng() * 0.8;
+        flower.scale.setScalar(s);
+        flower.rotation.y = rng() * Math.PI * 2;
+        this.group.add(flower);
+      }
+    }
+
     if (swamp > 0.2) {
       cattailCount = 6 + Math.floor(rng() * 6);
       for (let i = 0; i < cattailCount; i++) {
@@ -1302,6 +1334,251 @@ function createTallBuilding(rng, floors, posX, posZ, getHeight) {
   roof.position.y = H;
   g.add(roof);
 
+  return g;
+}
+
+function createFlower(rng, flowerType, isDry) {
+  const g = new THREE.Group();
+  const stemMat = new THREE.MeshStandardMaterial({ color: 0x3A7A2A, roughness: 0.7 });
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.2 + rng() * 0.15, 4), stemMat);
+  stem.position.y = 0.1 + rng() * 0.07;
+  g.add(stem);
+
+  function makeLeaf() {
+    const leafMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.25 + rng() * 0.08, 0.3 + rng() * 0.2, 0.2 + rng() * 0.15), roughness: 0.8 });
+    const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.04 + rng() * 0.03, 0.002, 0.02 + rng() * 0.02), leafMat);
+    leaf.position.y = 0.08 + rng() * 0.06;
+    leaf.rotation.z = 0.3 + rng() * 0.5;
+    leaf.rotation.x = (rng() - 0.5) * 0.5;
+    return leaf;
+  }
+
+  if (flowerType === 'tulip') {
+    const hue = 0.88 + rng() * 0.12;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.6, 0.3 + rng() * 0.2), roughness: 0.6 });
+    for (let i = 0; i < 4; i++) {
+      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.035, 4, 4), petalMat);
+      petal.scale.set(0.7, 0.9, 0.5);
+      const a = i * Math.PI / 2;
+      petal.position.set(Math.cos(a) * 0.025, 0.22 + Math.sin(a) * 0.005, Math.sin(a) * 0.025);
+      petal.rotation.set(0.2 * Math.cos(a), 0, 0.2 * Math.sin(a));
+      g.add(petal);
+    }
+    g.add(makeLeaf());
+  } else if (flowerType === 'daisy') {
+    const r = 1.0 + rng() * 0.5;
+    for (let i = 0; i < 8; i++) {
+      const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0, 0.0, 0.85 + rng() * 0.1), roughness: 0.5 });
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.003, 0.01), petalMat);
+      const a = i * Math.PI / 4;
+      petal.position.set(Math.cos(a) * 0.04, 0.2, Math.sin(a) * 0.04);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.3;
+      g.add(petal);
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: 0xCCAA33, roughness: 0.7 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), centerMat);
+    center.position.y = 0.2;
+    g.add(center);
+    g.add(makeLeaf());
+  } else if (flowerType === 'rose') {
+    const hue = 0.9 + rng() * 0.08;
+    for (let layer = 0; layer < 3; layer++) {
+      const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue + layer * 0.01, 0.6, 0.25 + layer * 0.08), roughness: 0.5 });
+      const n = 5 + layer * 2;
+      for (let i = 0; i < n; i++) {
+        const petal = new THREE.Mesh(new THREE.BoxGeometry(0.03 + layer * 0.008, 0.003, 0.012 + layer * 0.005), petalMat);
+        const a = i * Math.PI * 2 / n + layer * 0.3;
+        const r2 = 0.02 + layer * 0.015;
+        petal.position.set(Math.cos(a) * r2, 0.2 + layer * 0.008, Math.sin(a) * r2);
+        petal.rotation.y = -a;
+        petal.rotation.x = 0.3 + layer * 0.15;
+        g.add(petal);
+      }
+    }
+    const innerMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue + 0.02, 0.5, 0.15), roughness: 0.6 });
+    const inner = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 5), innerMat);
+    inner.position.y = 0.2;
+    g.add(inner);
+    g.add(makeLeaf());
+  } else if (flowerType === 'sunflower') {
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.1, 0.7, 0.45 + rng() * 0.15), roughness: 0.6 });
+    for (let i = 0; i < 14; i++) {
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.003, 0.012), petalMat);
+      const a = i * Math.PI * 2 / 14;
+      petal.position.set(Math.cos(a) * 0.05, 0.2, Math.sin(a) * 0.05);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.2;
+      g.add(petal);
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.08, 0.3, 0.15), roughness: 0.9 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), centerMat);
+    center.position.y = 0.19;
+    g.add(center);
+    const leaf2 = makeLeaf(); leaf2.scale.set(1.3, 1, 1); g.add(leaf2);
+  } else if (flowerType === 'bluebell') {
+    const hue = 0.6 + rng() * 0.08;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.5, 0.3 + rng() * 0.2), roughness: 0.6 });
+    for (let i = 0; i < 5; i++) {
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.004, 0.025), petalMat);
+      const a = i * Math.PI * 2 / 5;
+      petal.position.set(Math.cos(a) * 0.015, 0.2, Math.sin(a) * 0.015);
+      petal.rotation.y = -a;
+      petal.rotation.x = -0.4;
+      g.add(petal);
+    }
+    const bellMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.4, 0.25), roughness: 0.5 });
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 5), bellMat);
+    bell.scale.set(1, 0.9, 1);
+    bell.position.y = 0.22;
+    g.add(bell);
+    g.add(makeLeaf());
+  } else if (flowerType === 'poppy') {
+    const hue = 0.95 + rng() * 0.05;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.7, 0.3 + rng() * 0.15), roughness: 0.5, side: THREE.DoubleSide });
+    for (let i = 0; i < 4; i++) {
+      const petal = new THREE.Mesh(new THREE.CircleGeometry(0.03, 5), petalMat);
+      const a = i * Math.PI / 2 + 0.2;
+      petal.position.set(Math.cos(a) * 0.03, 0.19, Math.sin(a) * 0.03);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.3;
+      g.add(petal);
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: 0x332211, roughness: 0.9 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 5), centerMat);
+    center.position.y = 0.18;
+    g.add(center);
+    g.add(makeLeaf());
+  } else if (flowerType === 'lavender') {
+    const hue = 0.72 + rng() * 0.06;
+    const floretMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.4, 0.3 + rng() * 0.2), roughness: 0.6 });
+    for (let i = 0; i < 6; i++) {
+      const floret = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), floretMat);
+      floret.position.set((rng() - 0.5) * 0.03, 0.18 + i * 0.025, (rng() - 0.5) * 0.03);
+      g.add(floret);
+    }
+    const spikeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.3, 0.2), roughness: 0.7 });
+    const spike = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.015, 0.15, 4), spikeMat);
+    spike.position.y = 0.2;
+    g.add(spike);
+  } else if (flowerType === 'orchid') {
+    const hue = 0.78 + rng() * 0.1;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.5, 0.35 + rng() * 0.15), roughness: 0.4 });
+    for (let i = 0; i < 3; i++) {
+      const petal = new THREE.Mesh(new THREE.CircleGeometry(0.025, 5), petalMat);
+      const a = i * Math.PI * 2 / 3;
+      petal.position.set(Math.cos(a) * 0.035, 0.19, Math.sin(a) * 0.035);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.5;
+      g.add(petal);
+    }
+    const lipMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue + 0.1, 0.6, 0.25), roughness: 0.4 });
+    const lip = new THREE.Mesh(new THREE.CircleGeometry(0.02, 5), lipMat);
+    lip.position.set(0, 0.16, 0.035);
+    lip.rotation.x = 0.8;
+    g.add(lip);
+    g.add(makeLeaf());
+  } else if (flowerType === 'lily') {
+    const hue = 0.05 + rng() * 0.08;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.5, 0.4 + rng() * 0.15), roughness: 0.5, side: THREE.DoubleSide });
+    for (let i = 0; i < 6; i++) {
+      const petal = new THREE.Mesh(new THREE.CircleGeometry(0.025, 5), petalMat);
+      const a = i * Math.PI / 3;
+      petal.position.set(Math.cos(a) * 0.03, 0.2, Math.sin(a) * 0.03);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.4;
+      g.add(petal);
+    }
+    const trumpetMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue + 0.03, 0.4, 0.3), roughness: 0.5 });
+    const trumpet = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.02, 0.04, 5), trumpetMat);
+    trumpet.position.y = 0.2;
+    g.add(trumpet);
+    g.add(makeLeaf());
+  } else if (flowerType === 'daffodil') {
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.1, 0.5, 0.6 + rng() * 0.15), roughness: 0.5 });
+    for (let i = 0; i < 6; i++) {
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.003, 0.01), petalMat);
+      const a = i * Math.PI / 3;
+      petal.position.set(Math.cos(a) * 0.035, 0.19, Math.sin(a) * 0.035);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.3;
+      g.add(petal);
+    }
+    const trumpetMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.1, 0.6, 0.35), roughness: 0.5 });
+    const trumpet = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.018, 0.025, 6), trumpetMat);
+    trumpet.position.y = 0.2;
+    g.add(trumpet);
+    g.add(makeLeaf());
+  } else if (flowerType === 'lotus') {
+    const hue = 0.85 + rng() * 0.08;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.5, 0.4 + rng() * 0.15), roughness: 0.4, side: THREE.DoubleSide });
+    for (let layer = 0; layer < 2; layer++) {
+      const n = 5 + layer * 2;
+      for (let i = 0; i < n; i++) {
+        const petal = new THREE.Mesh(new THREE.CircleGeometry(0.025, 5), petalMat);
+        const a = i * Math.PI * 2 / n;
+        const r2 = 0.02 + layer * 0.015;
+        petal.position.set(Math.cos(a) * r2, 0.02, Math.sin(a) * r2);
+        petal.rotation.x = -0.1;
+        g.add(petal);
+      }
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: 0xDDCC44, roughness: 0.6 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 5), centerMat);
+    center.position.y = 0.04;
+    g.add(center);
+  } else if (flowerType === 'marigold') {
+    const hue = 0.06 + rng() * 0.06;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.7, 0.3 + rng() * 0.2), roughness: 0.5 });
+    for (let i = 0; i < 10; i++) {
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.003, 0.02), petalMat);
+      const a = i * Math.PI * 2 / 10;
+      petal.position.set(Math.cos(a) * 0.04, 0.19, Math.sin(a) * 0.04);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.3;
+      g.add(petal);
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue + 0.05, 0.5, 0.2), roughness: 0.8 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 5), centerMat);
+    center.position.y = 0.18;
+    g.add(center);
+    g.add(makeLeaf());
+  } else if (flowerType === 'alpineaster') {
+    const hue = 0.72 + rng() * 0.08;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.4, 0.4 + rng() * 0.15), roughness: 0.5 });
+    for (let i = 0; i < 10; i++) {
+      const petal = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.003, 0.01), petalMat);
+      const a = i * Math.PI * 2 / 10;
+      petal.position.set(Math.cos(a) * 0.025, 0.15, Math.sin(a) * 0.025);
+      petal.rotation.y = -a;
+      petal.rotation.x = 0.3;
+      g.add(petal);
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: 0xCCCC44, roughness: 0.6 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.012, 5, 5), centerMat);
+    center.position.y = 0.14;
+    g.add(center);
+  } else if (flowerType === 'desertrose') {
+    const hue = 0.9 + rng() * 0.06;
+    const petalMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.5, 0.4 + rng() * 0.15), roughness: 0.7, emissive: new THREE.Color().setHSL(hue, 0.3, 0.05), emissiveIntensity: 0.2 });
+    for (let layer = 0; layer < 2; layer++) {
+      const n = 4 + layer * 2;
+      for (let i = 0; i < n; i++) {
+        const petal = new THREE.Mesh(new THREE.SphereGeometry(0.02, 4, 4), petalMat);
+        const a = i * Math.PI * 2 / n;
+        const r2 = 0.015 + layer * 0.015;
+        petal.position.set(Math.cos(a) * r2, 0.04 + layer * 0.005, Math.sin(a) * r2);
+        petal.scale.set(0.8, 0.5, 0.8);
+        g.add(petal);
+      }
+    }
+    const centerMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue + 0.03, 0.3, 0.2), roughness: 0.8 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.01, 5, 5), centerMat);
+    center.position.y = 0.05;
+    g.add(center);
+  }
+
+  g.position.y = -0.02;
   return g;
 }
 
