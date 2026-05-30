@@ -35,6 +35,8 @@ export class Combat {
     this.isEnemyDefending = false;
     this.nextAtkMult = null;
     this.anim = null;
+    this.invincible = false;
+    this.president = false;
     this.#grab();
   }
 
@@ -100,7 +102,7 @@ export class Combat {
     document.getElementById('btn-item-back').addEventListener('click', () => this.#showMainActions());
   }
 
-  start(creature, foxGroup, enemyGroup, foxHP, foxMaxHP, foxATK, foxDEF) {
+  start(creature, foxGroup, enemyGroup, foxHP, foxMaxHP, foxATK, foxDEF, invincible, president) {
     this.creature = creature;
     this.foxGroup = foxGroup;
     this.enemyGroup = enemyGroup;
@@ -113,6 +115,8 @@ export class Combat {
     this.enemyATK = creature.atk;
     this.enemyDEF = creature.def;
     this.isActive = true;
+    this.invincible = !!invincible;
+    this.president = !!president;
     this.isPlayerDefending = false;
     this.isEnemyDefending = false;
     this.enemyScale = creature.scale ?? 1.0;
@@ -284,7 +288,16 @@ export class Combat {
     try {
       this.#startAnim('fox', speed);
 
-      if (Math.random() < atk.hitChance * hitMult) {
+      if (this.president) {
+        this.enemyHP = 0;
+        this.#addLog('🏛️ PRESIDENT powers activate! Instant kill!');
+        this.#updateHP();
+        this.#addLog(`${this.creature.displayName} defeated!`);
+        setTimeout(() => this.#end(true), 1200);
+        return;
+      }
+
+      if (this.invincible || Math.random() < atk.hitChance * hitMult) {
         const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
         const sizeMult = this.enemyScale < 1.0 ? (2 - this.enemyScale) : 1.0;
         const buffMult = this.nextAtkMult || 1.0;
@@ -330,7 +343,9 @@ export class Combat {
       const wasDefending = this.isPlayerDefending;
       this.isPlayerDefending = false;
 
-      if (Math.random() < atk.hitChance * hitMult) {
+      if (this.invincible) {
+        this.#addLog(`${this.creature.displayName} attacks but the fox is invincible! 💫`);
+      } else if (Math.random() < atk.hitChance * hitMult) {
         const raw = atk.minDmg + Math.random() * (atk.maxDmg - atk.minDmg);
         const dmg = Math.max(1, Math.floor(raw * dmgMult - this.foxDEF));
         this.foxHP -= dmg;
@@ -395,6 +410,15 @@ export class Combat {
         this.nextAtkMult = item.atkMult || 1.5;
         this.#addLog(`Fox uses ${item.name} and feels empowered!`);
         setTimeout(() => this.#enemyTurn(), 600);
+        return;
+      }
+
+      if (this.president) {
+        this.enemyHP = 0;
+        this.#addLog(`🏛️ President uses ${item.name} — absolute power!`);
+        this.#addLog(`${this.creature.displayName} defeated!`);
+        this.#updateHP();
+        setTimeout(() => this.#end(true), 1200);
         return;
       }
 

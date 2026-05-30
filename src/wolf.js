@@ -7,7 +7,7 @@ const ENEMY_TYPES = {
     bodyColor: 0x6B6B6B, darkColor: 0x4A4A4A, accentColor: 0xD0D0D0,
     scale: 1, speed: 2, patrolSpeed: 1.2, chaseSpeed: 2.8,
     detectionRange: 22, attackRange: 1.8,
-    biomes: ['forest', 'plains'], weight: 4,
+      biomes: ['forest', 'plains'], weight: 1,
   },
   scorpion: {
     id: 'scorpion', name: 'Scorpion', icon: '🦂',

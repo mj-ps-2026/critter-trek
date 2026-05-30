@@ -1,146 +1,97 @@
 import * as THREE from 'three';
-import { furMaterial, smoothDisplace, makeEye } from './realism.js';
+import { furMaterial, furVariation, smoothDisplace } from './realism.js';
+import { buildBody, buildLimb, buildEars, buildHead, addEyes } from './animalshapes.js';
 
 export class Animal {
   constructor() {
     this.group = new THREE.Group();
     this.clock = 0;
     this.buildFox();
-    this.#applyRealism();
-  }
-
-  #applyRealism() {
-    this.group.traverse(child => {
-      if (child.isMesh && child.geometry) {
-        const hex = child.material.color.getHex();
-        const isBodyPart = hex !== 0x111111 && hex !== 0xFFFFFF;
-        if (isBodyPart) {
-          const variation = 12 + Math.random() * 16;
-          const newMat = furMaterial(hex, { variation, roughness: 0.85 });
-          child.material.dispose();
-          child.material = newMat;
-          smoothDisplace(child.geometry, 0.02);
-        }
-      }
-    });
-
-    // Replace eyes with realistic versions
-    const meshes = [];
-    this.group.traverse(c => { if (c.isMesh) meshes.push(c); });
-    const whiteEyes = meshes.filter(m =>
-      m.geometry.type === 'SphereGeometry' && m.material.color.getHex() === 0xFFFFFF && m.geometry.parameters.radius < 0.05
-    );
-    for (const we of whiteEyes) {
-      const pupil = meshes.find(m =>
-        m !== we && m.geometry.type === 'SphereGeometry' && m.material.color.getHex() === 0x111111 &&
-        m.position.distanceTo(we.position) < 0.06
-      );
-      if (!pupil) continue;
-      const parent = we.parent;
-      const pos = we.position.clone();
-      const s = we.geometry.parameters.radius * 0.5;
-      const eye = makeEye(0x8B5E3C, 0x111111, s);
-      eye.position.copy(pos);
-      eye.rotation.y = pos.x > 0 ? -0.1 : 0.1;
-      parent.add(eye);
-      parent.remove(we); we.geometry.dispose(); we.material.dispose();
-      parent.remove(pupil); pupil.geometry.dispose(); pupil.material.dispose();
-    }
   }
 
   buildFox() {
     const orange = 0xD4641A;
-    const darkOrange = 0xB8500A;
-    const cream = 0xF5F0E6;
-    const darkBrown = 0x2A1A0A;
-    const black = 0x111111;
+    const bodyColor = furVariation(orange);
 
-    const mat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
+    // Organic body using CatmullRomCurve3 (sleek fox shape)
+    const body = buildBody(
+      [[0, 0.2, 0.3], [0, 0.28, 0.12], [0, 0.34, -0.02], [0, 0.38, -0.16], [0, 0.42, -0.28], [0, 0.5, -0.38]],
+      [0.16, 0.2, 0.24, 0.22, 0.16, 0.08], 14, 10
+    );
+    body.material.dispose();
+    body.material = furMaterial(bodyColor, { variation: 18, roughness: 0.85 });
+    smoothDisplace(body.geometry, 0.015);
+    body.castShadow = true;
+    this.body = body;
+    this.group.add(body);
 
-    this.body = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), mat(orange));
-    this.body.scale.set(1.4, 0.7, 1.9);
-    this.body.position.y = 0.3;
-    this.body.castShadow = true;
-    this.group.add(this.body);
-
-    const chest = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), mat(cream));
-    chest.scale.set(1.1, 0.8, 1);
-    chest.position.set(0, 0.2, -0.4);
+    // Chest (lighter color)
+    const chestColor = furVariation(0xF5F0E6);
+    const chest = buildBody(
+      [[0, 0.2, -0.1], [0, 0.25, -0.18], [0, 0.28, -0.26]],
+      [0.1, 0.12, 0.07], 6, 7
+    );
+    chest.material.dispose();
+    chest.material = furMaterial(chestColor, { variation: 12, roughness: 0.85 });
+    smoothDisplace(chest.geometry, 0.01);
     this.group.add(chest);
 
-    const headMat = mat(orange);
-    this.head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), headMat);
-    this.head.scale.set(1.5, 1.1, 1.4);
-    this.head.position.set(0, 0.5, -0.52);
-    this.head.castShadow = true;
-    this.group.add(this.head);
+    // Head
+    const head = buildHead([0, 0.62, -0.42], 1, 0.12, bodyColor);
+    this.head = head;
+    this.group.add(head);
 
-    this.snout = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), mat(cream));
-    this.snout.scale.set(1.2, 0.7, 1.5);
-    this.snout.position.set(0, 0.46, -0.68);
-    this.group.add(this.snout);
+    // Snout
+    const snoutMat = furMaterial(chestColor, { variation: 10, roughness: 0.8 });
+    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), snoutMat);
+    snout.position.set(0, 0.58, -0.56);
+    snout.scale.set(1.4, 0.7, 1.6);
+    smoothDisplace(snout.geometry, 0.008);
+    this.group.add(snout);
 
-    this.nose = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), mat(black));
-    this.nose.position.set(0, 0.46, -0.74);
-    this.group.add(this.nose);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 6), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }));
+    nose.position.set(0, 0.58, -0.62);
+    this.group.add(nose);
 
-    const earMat = mat(darkOrange);
-    const earInnerMat = mat(cream);
-    for (const side of [-1, 1]) {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.1, 8), earMat);
-      ear.position.set(side * 0.1, 0.62, -0.52);
-      ear.rotation.z = side * 0.2;
-      this.group.add(ear);
+    // Ears
+    buildEars(this.group, [0.1, 0.72, -0.36], 0.16, 0.045, bodyColor, furVariation(0xF5F0E6));
 
-      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.06, 8), earInnerMat);
-      inner.position.set(side * 0.1, 0.6, -0.52);
-      inner.rotation.z = side * 0.2;
-      this.group.add(inner);
-    }
+    // Eyes
+    addEyes(this.group, [0.07, 0.64, -0.46], [-0.07, 0.64, -0.46], 0x8B5E3C, 0.8);
 
-    const eyeMat = mat(black);
-    const eyeWhiteMat = mat(0xFFFFFF);
-    for (const side of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeWhiteMat);
-      white.position.set(side * 0.09, 0.52, -0.6);
-      this.group.add(white);
-
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
-      pupil.position.set(side * 0.09, 0.52, -0.6);
-      this.group.add(pupil);
-    }
-
-    const legMat = mat(darkBrown);
+    // Legs
     this.legs = [];
-    const legPositions = [
-      { x: 0.2, z: 0.3 },
-      { x: -0.2, z: 0.3 },
-      { x: 0.2, z: -0.3 },
-      { x: -0.2, z: -0.3 },
-    ];
-    for (const lp of legPositions) {
+    const legColor = furVariation(0x2A1A0A);
+    for (const [offX, offZ] of [[0.15, 0.2], [-0.15, 0.2], [0.15, -0.2], [-0.15, -0.2]]) {
       const legGroup = new THREE.Group();
-      legGroup.position.set(lp.x, 0.15, lp.z);
-      const legMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.25, 8), legMat);
-      legMesh.position.y = -0.125;
-      legGroup.add(legMesh);
+      const leg = buildLimb(
+        new THREE.Vector3(0, 0.02, 0),
+        new THREE.Vector3(0, -0.25, 0),
+        0.035, 0.03, 5, legColor
+      );
+      if (leg) {
+        smoothDisplace(leg.geometry, 0.008);
+        legGroup.add(leg);
+      }
+      legGroup.position.set(offX, 0.15, offZ);
       this.group.add(legGroup);
       this.legs.push(legGroup);
     }
 
-    const tailMat = mat(orange);
+    // Tail (bushy, curving up)
     this.tail = new THREE.Group();
-    this.tail.position.set(0, 0.35, 0.48);
-    const tailMesh = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.3, 8), tailMat);
-    tailMesh.position.y = 0.15;
-    tailMesh.rotation.x = 0.3;
-    this.tail.add(tailMesh);
-
-    const tailTip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.08, 8), mat(cream));
-    tailTip.position.set(0, 0.3, 0);
-    tailTip.rotation.x = 0.3;
-    this.tail.add(tailTip);
-
+    this.tail.position.set(0, 0.3, 0.45);
+    const tailBottom = new THREE.Vector3(0, 0, 0);
+    const tailMid = new THREE.Vector3(0.05, 0.15, 0);
+    const tailTip = new THREE.Vector3(0, 0.3, -0.02);
+    const tailSeg1 = buildLimb(tailBottom, tailMid, 0.06, 0.05, 5, bodyColor);
+    if (tailSeg1) { smoothDisplace(tailSeg1.geometry, 0.008); this.tail.add(tailSeg1); }
+    const tailSeg2 = buildLimb(tailMid, tailTip, 0.05, 0.035, 5, bodyColor);
+    if (tailSeg2) { smoothDisplace(tailSeg2.geometry, 0.008); this.tail.add(tailSeg2); }
+    const tailFluff = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), furMaterial(chestColor, { variation: 10, roughness: 0.85 }));
+    tailFluff.position.copy(tailTip);
+    smoothDisplace(tailFluff.geometry, 0.01);
+    this.tail.add(tailFluff);
     this.group.add(this.tail);
   }
 
@@ -155,9 +106,9 @@ export class Animal {
       this.legs[3].rotation.x = Math.sin(phase) * 0.6;
 
       const bob = Math.sin(Date.now() * 0.004) * 0.04;
-      this.body.position.y = 0.3 + bob;
+      this.body.position.y = bob;
       this.body.rotation.z = Math.sin(Date.now() * 0.002) * 0.08;
-      this.head.position.y = 0.52 + bob * 0.8;
+      this.head.position.y = 0.62 + bob * 0.8;
 
       this.tail.rotation.z = Math.sin(Date.now() * 0.003) * 0.4;
       return;
@@ -170,9 +121,9 @@ export class Animal {
     this.legs[3].rotation.x = legSwing;
 
     const bob = isMoving ? Math.sin(this.clock * 2) * 0.025 : 0;
-    this.body.position.y = 0.3 + bob;
+    this.body.position.y = bob;
     this.body.rotation.z = 0;
-    this.head.position.y = 0.5 + bob * 0.8;
+    this.head.position.y = 0.62 + bob * 0.8;
 
     const tailWag = isMoving ? Math.sin(this.clock * 0.5) * 0.3 : Math.sin(Date.now() * 0.002) * 0.1;
     this.tail.rotation.z = tailWag;

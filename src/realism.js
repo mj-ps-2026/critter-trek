@@ -4,8 +4,8 @@ const texCache = new Map();
 
 function generateFurCanvas(baseHex, variation) {
   const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 128;
+  c.width = 256;
+  c.height = 256;
   const ctx = c.getContext('2d');
 
   const r0 = (baseHex >> 16) & 0xFF;
@@ -13,11 +13,13 @@ function generateFurCanvas(baseHex, variation) {
   const b0 = baseHex & 0xFF;
   const v = variation || 20;
 
-  for (let y = 0; y < 128; y++) {
-    for (let x = 0; x < 128; x++) {
-      const n = (Math.sin(x * 1.7 + y * 2.3) * Math.cos(x * 0.9 - y * 1.1) + 1) * 0.5;
+  // Base coat with 3-octave noise
+  for (let y = 0; y < 256; y++) {
+    for (let x = 0; x < 256; x++) {
+      const n1 = (Math.sin(x * 1.7 + y * 2.3) * Math.cos(x * 0.9 - y * 1.1) + 1) * 0.5;
       const n2 = (Math.sin(x * 5.3 + y * 3.7) * Math.cos(x * 2.1 - y * 4.3) + 1) * 0.5;
-      const blend = n * 0.6 + n2 * 0.4;
+      const n3 = (Math.sin(x * 12.1 + y * 9.7) * Math.cos(x * 7.3 - y * 11.2) + 1) * 0.5;
+      const blend = n1 * 0.5 + n2 * 0.3 + n3 * 0.2;
       const dither = (Math.random() - 0.5) * (v * 0.3);
       const r = Math.max(0, Math.min(255, r0 + (blend - 0.5) * v + dither));
       const g = Math.max(0, Math.min(255, g0 + (blend - 0.45) * v + dither));
@@ -27,17 +29,35 @@ function generateFurCanvas(baseHex, variation) {
     }
   }
 
-  // subtle vertical streaks for fur direction
-  ctx.globalAlpha = 0.08;
-  for (let i = 0; i < 30; i++) {
-    const x = Math.random() * 128;
-    const y = Math.random() * 128;
-    const len = 5 + Math.random() * 20;
-    ctx.strokeStyle = `rgb(${r0+10|0},${g0+10|0},${b0+10|0})`;
-    ctx.lineWidth = 1 + Math.random();
+  // vertical fur streaks
+  ctx.globalAlpha = 0.12;
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random() * 256;
+    const y = Math.random() * 256;
+    const len = 15 + Math.random() * 40;
+    const dr = (Math.random() - 0.5) * 8;
+    const dg = (Math.random() - 0.5) * 8;
+    const db = (Math.random() - 0.5) * 8;
+    ctx.strokeStyle = `rgb(${Math.min(255,r0+dr|0)},${Math.min(255,g0+dg|0)},${Math.min(255,b0+db|0)})`;
+    ctx.lineWidth = 1 + Math.random() * 2;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.lineTo(x + (Math.random() - 0.5) * 3, y - len);
+    ctx.lineTo(x + (Math.random() - 0.5) * 4, y - len);
+    ctx.stroke();
+  }
+
+  // guard hairs (lighter top layer)
+  ctx.globalAlpha = 0.06;
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * 256;
+    const y = Math.random() * 256;
+    const len = 20 + Math.random() * 50;
+    const bright = Math.min(255, r0 + 20 + Math.random() * 15);
+    ctx.strokeStyle = `rgb(${bright|0},${Math.min(255,g0+15|0)}|0,${Math.min(255,b0+10|0)}|0)`;
+    ctx.lineWidth = 0.5 + Math.random();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (Math.random() - 0.5) * 2, y - len);
     ctx.stroke();
   }
 

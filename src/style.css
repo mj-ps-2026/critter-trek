@@ -377,3 +377,110 @@ canvas { display: block; }
 .mode-btn:hover {
   filter: brightness(1.2);
 }
+
+/* ── Chest overlay ── */
+#chest-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 45;
+  align-items: center;
+  justify-content: center;
+}
+#chest-panel {
+  background: rgba(25,20,15,0.95);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  min-width: 280px;
+  max-width: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+#chest-panel h2 {
+  color: #d4b87a;
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+#chest-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.chest-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(60,45,25,0.5);
+  border-radius: 8px;
+  color: #e0d0b0;
+  font-size: 15px;
+}
+.chest-item-row .chest-item-icon { font-size: 18px; margin-right: 8px; }
+.chest-item-row .chest-item-name { flex: 1; text-align: left; }
+.chest-item-row .chest-item-count { color: #d4b87a; font-weight: 600; }
+#btn-chest-collect {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #6a8a3a;
+  color: #fff;
+  margin-right: 8px;
+  transition: background 0.15s;
+}
+#btn-chest-collect:hover { background: #8aaa4a; }
+#btn-chest-close {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #555;
+  color: #ccc;
+  transition: background 0.15s;
+}
+#btn-chest-close:hover { background: #666; }
+
+#btn-chest-open {
+  position: fixed;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 28px;
+  font-size: 18px;
+  border: 2px solid #b58a4a;
+  background: rgba(80,60,30,0.85);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 100;
+  font-family: system-ui, sans-serif;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+#btn-chest-open:hover { background: rgba(120,90,50,0.9); }
+
+#btn-buy-house {
+  position: fixed;
+  bottom: 190px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 28px;
+  font-size: 18px;
+  border: 2px solid #4a8ab5;
+  background: rgba(40,70,120,0.85);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 100;
+  font-family: system-ui, sans-serif;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s, opacity 0.2s;
+}
+#btn-buy-house:hover { background: rgba(60,100,160,0.9); }

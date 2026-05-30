@@ -320,6 +320,17 @@ class ItemManager {
     return { ...ITEM_DEFS[type] };
   }
 
+  addItem(type, count) {
+    this.inventory[type] = (this.inventory[type] || 0) + (count || 1);
+  }
+
+  removeItems(type, count) {
+    if ((this.inventory[type] || 0) < count) return false;
+    this.inventory[type] -= count;
+    if (this.inventory[type] <= 0) delete this.inventory[type];
+    return true;
+  }
+
   getCounts() {
     return { ...this.inventory };
   }

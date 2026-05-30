@@ -274,6 +274,77 @@ drinkBtn.addEventListener('click', () => { controls.drinkPressed = true; });
 const diveBtn = document.getElementById('btn-dive');
 diveBtn.addEventListener('click', () => { controls.divePressed = true; });
 
+const chestOverlay = document.getElementById('chest-overlay');
+const chestItemsEl = document.getElementById('chest-items');
+const chestTitle = document.getElementById('chest-title');
+const btnChestCollect = document.getElementById('btn-chest-collect');
+const btnChestClose = document.getElementById('btn-chest-close');
+const btnChestOpen = document.getElementById('btn-chest-open');
+let activeChestHouse = null;
+
+function openChestUI(house) {
+  if (!house.lootSpawned) house.openChest();
+  activeChestHouse = house;
+  chestTitle.textContent = house.isMansion ? '💎 Mansion Chest' : '📦 Chest';
+  chestItemsEl.innerHTML = '';
+  const items = house.chestLoot || [];
+  if (items.length === 0) {
+    chestItemsEl.innerHTML = '<div style="color:#888;padding:12px;">Chest is empty</div>';
+    btnChestCollect.style.display = 'none';
+  } else {
+    btnChestCollect.style.display = 'inline-block';
+    for (const it of items) {
+      const def = ITEM_DEFS[it.type];
+      const row = document.createElement('div');
+      row.className = 'chest-item-row';
+      row.innerHTML = `<span class="chest-item-icon">${def ? def.icon : '❓'}</span><span class="chest-item-name">${def ? def.name : it.type}</span><span class="chest-item-count">×${it.count}</span>`;
+      chestItemsEl.appendChild(row);
+    }
+  }
+  chestOverlay.style.display = 'flex';
+}
+
+btnChestCollect.addEventListener('click', () => {
+  if (activeChestHouse) {
+    const items = activeChestHouse.collectChestLoot(itemManager);
+    infoEl.textContent = `📦 Collected ${items.length} items from chest!`;
+    infoEl.style.background = 'rgba(180,140,60,0.8)';
+    setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 2000);
+    chestOverlay.style.display = 'none';
+    activeChestHouse = null;
+    btnChestOpen.style.display = 'none';
+    if (gameMode === 'creative') rebuildBuildPalette();
+  }
+});
+
+btnChestClose.addEventListener('click', () => {
+  chestOverlay.style.display = 'none';
+  activeChestHouse = null;
+});
+
+btnChestOpen.addEventListener('click', () => {
+  if (currentHouse && currentHouse.isNearChest(animal.group.position) && currentHouse.lootContainer.visible) {
+    openChestUI(currentHouse);
+  }
+});
+
+btnBuyHouse.addEventListener('click', () => {
+  if (currentHouse && !currentHouse.owned && currentHouse.canAfford(itemManager.getCounts())) {
+    currentHouse.buy(itemManager);
+    infoEl.textContent = '🏠 House purchased! You now get passive resources!';
+    infoEl.style.background = 'rgba(80,180,80,0.8)';
+    setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 3000);
+    btnBuyHouse.style.display = 'none';
+    if (gameMode === 'creative') rebuildBuildPalette();
+  } else if (currentHouse && !currentHouse.owned) {
+    const price = currentHouse.getPrice();
+    const costStr = price.map(p => `❌ ${p.count}x ${ITEM_DEFS[p.type].name}`).join(' ');
+    infoEl.textContent = `Not enough resources! Need ${costStr}`;
+    infoEl.style.background = 'rgba(200,80,80,0.8)';
+    setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 3000);
+  }
+});
+
 const clock = new THREE.Clock();
 const infoEl = document.getElementById('info');
 
@@ -298,6 +369,34 @@ let foxXP = 0;
 let foxCurrentHP = BASE_HP;
 let combatCooldown = 0;
 let drinkCooldown = 0;
+
+let currentHouse = null;
+let isPresident = false;
+const btnBuyHouse = document.getElementById('btn-buy-house');
+
+function checkPresident() {
+  const cnt = itemManager.getCounts();
+  for (const [type, qty] of Object.entries(cnt)) {
+    if (qty >= 100) {
+      if (!isPresident) {
+        isPresident = true;
+        infoEl.textContent = `🏛️ YOU ARE PRESIDENT! 100 ${ITEM_DEFS[type].icon} collected! +5 Levels!`;
+        infoEl.style.background = 'rgba(200,180,50,0.9)';
+        setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 4000);
+        for (let i = 0; i < 5; i++) {
+          if (foxXP >= xpForLevel(foxLevel)) {
+            foxXP -= xpForLevel(foxLevel);
+            foxLevel++;
+            foxCurrentHP = Math.min(foxCurrentHP + 5, getMaxHP(foxLevel));
+          }
+        }
+        saveGame();
+      }
+      return true;
+    }
+  }
+  return false;
+}
 
 function getMaxHP(level) { return Math.floor(BASE_HP + (level - 1) * HP_PER_LEVEL); }
 function getATK(level) { return BASE_ATK + (level - 1) * ATK_PER_LEVEL; }
@@ -369,6 +468,10 @@ function addXP(amount) {
 const keys = {};
 window.addEventListener('keydown', e => {
   keys[e.code] = true;
+  if (e.code === 'Escape' && chestOverlay.style.display === 'flex') {
+    chestOverlay.style.display = 'none';
+    return;
+  }
   if (e.code === 'KeyR' && gameState === EXPLORE) {
     biomeMenu.style.display = biomeMenu.style.display === 'none' ? 'flex' : 'none';
   }
@@ -383,7 +486,12 @@ window.addEventListener('keydown', e => {
       craftingMenu.style.display = 'none';
     }
   }
-  if (e.code === 'KeyE' && gameState === EXPLORE && gameMode === 'creative' && buildingManager.selectedType) {
+  if (e.code === 'KeyE' && gameState === EXPLORE) {
+    if (currentHouse && currentHouse.lootContainer && currentHouse.lootContainer.visible && currentHouse.isNearChest(animal.group.position)) {
+      openChestUI(currentHouse);
+      return;
+    }
+    if (gameMode === 'creative' && buildingManager.selectedType) {
     const toolItems = ['animalsword', 'animalpickaxe', 'animaltrident'];
     if (toolItems.includes(buildingManager.selectedType)) {
       const result = buildingManager.interactWith(animal.group.position, buildingManager.selectedType);
@@ -410,6 +518,7 @@ window.addEventListener('keydown', e => {
         saveBuildData();
         rebuildBuildPalette();
       }
+    }
     }
   }
   if (e.code === 'KeyQ' && gameState === EXPLORE && gameMode === 'creative') {
@@ -803,7 +912,7 @@ function animate() {
 
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos, dayFactor > 0.3);
-        if (result === 'attacking' && gameMode === 'survival') {
+        if (result === 'attacking') {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
           craftingMenu.style.display = 'none';
@@ -816,13 +925,13 @@ function animate() {
               const idx = wolves.indexOf(wolf);
               if (idx !== -1) wolves.splice(idx, 1);
             }
-          }, animal.group, wolf.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel));
+            }, animal.group, wolf.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel), gameMode === 'creative', isPresident);
           break;
         }
       }
 
       for (const faunaAnimal of fauna.animals) {
-        if (faunaAnimal.group.position.distanceTo(pos) < 0.8 && gameMode === 'survival') {
+        if (faunaAnimal.group.position.distanceTo(pos) < 0.8) {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
           craftingMenu.style.display = 'none';
@@ -834,7 +943,7 @@ function animate() {
               creature.removeFrom(s);
               fauna.animals = fauna.animals.filter(a => a !== creature);
             }
-          }, animal.group, creature.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel));
+            }, animal.group, creature.group, foxCurrentHP, getMaxHP(foxLevel), getATK(foxLevel), getDEF(foxLevel), gameMode === 'creative', isPresident);
           break;
         }
       }
@@ -844,6 +953,49 @@ function animate() {
 
       buildingManager.update(animal.group.position);
       if (frameCount % 300 === 0 && buildingManager.objects.length > 0) saveBuildData();
+
+      // ── House updates (guardians, passive resources) ──
+      for (const house of chunkManager.houses) {
+        house.update(dt, pos, itemManager);
+      }
+
+      // ── House detection / interior view / chest / buy ──
+      let nearbyHouse = null;
+      for (const house of chunkManager.houses) {
+        if (house.isPlayerInside(pos)) {
+          nearbyHouse = house;
+          break;
+        }
+      }
+
+      if (nearbyHouse !== currentHouse) {
+        if (currentHouse) currentHouse.setInteriorView(false);
+        if (nearbyHouse) {
+          nearbyHouse.setInteriorView(true);
+          if (!nearbyHouse.entered) {
+            nearbyHouse.activateGuardian(scene);
+          }
+        }
+        currentHouse = nearbyHouse;
+      }
+
+      if (currentHouse && currentHouse.lootContainer && currentHouse.lootContainer.visible) {
+        btnChestOpen.style.display = currentHouse.isNearChest(pos) ? 'block' : 'none';
+      } else {
+        btnChestOpen.style.display = 'none';
+      }
+
+      if (currentHouse && !currentHouse.owned) {
+        const price = currentHouse.getPrice();
+        const costStr = price.map(p => `${p.count} ${ITEM_DEFS[p.type].icon}`).join(' ');
+        btnBuyHouse.textContent = `🏠 Buy (${costStr})`;
+        btnBuyHouse.style.display = 'block';
+        btnBuyHouse.style.opacity = currentHouse.canAfford(itemManager.getCounts()) ? '1' : '0.4';
+      } else {
+        btnBuyHouse.style.display = 'none';
+      }
+
+      checkPresident();
 
       if (drinkCooldown > 0) drinkCooldown -= dt;
       if (controls.divePressed) {
@@ -946,8 +1098,10 @@ function animate() {
         const nextXP = xpForLevel(foxLevel);
         const bioInfo = chunkManager.getBiomeInfo(pos.x, pos.z);
         const biomeName = getBiomeName(bioInfo, pos.y);
-        infoEl.textContent = `⚔️ SURVIVAL · ${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP}${controls.keys.sprint ? ' ⚡SPRINT' : ''}` + items;
-        infoEl.style.background = 'rgba(0,0,0,0.5)';
+        const location = currentHouse ? (currentHouse.legendary ? '🏛️ Legendary Estate' : currentHouse.owned ? '🏠 Home' : '🏚️ House') : (bioInfo.cityFactor > 0.1 ? `🏙️ ${biomeName.charAt(0).toUpperCase() + biomeName.slice(1)} City` : biomeName);
+        const presBadge = isPresident ? ' 🏛️PRESIDENT' : '';
+        infoEl.textContent = `⚔️${presBadge} ${location} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP}${controls.keys.sprint ? ' ⚡SPRINT' : ''}` + items;
+        infoEl.style.background = isPresident ? 'rgba(100,80,20,0.7)' : 'rgba(0,0,0,0.5)';
       }
       break;
     }

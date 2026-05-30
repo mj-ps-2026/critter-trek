@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Noise } from './noise.js';
+import { House } from './houses.js';
 
 const CHUNK_SIZE = 50;
 const SEGMENTS = 28;
@@ -34,12 +35,19 @@ export class ChunkManager {
     this.lastCX = null;
     this.lastCZ = null;
     this.renderDist = 4;
+    this.houses = [];
 
     const n = new Noise(seed * 7 + 13);
     const n2 = new Noise(seed * 31 + 7);
     const nBio = new Noise(seed * 97 + 23);
+    const nCity = new Noise(seed * 53 + 17);
 
     this.noiseOverride = null;
+
+    this.getCityFactor = (x, z) => {
+      const raw = nCity.noise2D(x * 0.0002, z * 0.0002);
+      return Math.max(0, (raw - 0.35) / 0.5);
+    };
 
     this.setNoiseOverride = (x, z, biomeName, radius) => {
       this.noiseOverride = { x, z, biomeName, radius, targets: getBiomeTargets(biomeName) };
@@ -195,7 +203,8 @@ export class ChunkManager {
       const land = smoothstep(continent, -0.35, 0.05);
       const mountain = smoothstep(continent, 0.15, 0.55);
       if (!biomeRegion) biomeRegion = this.getBiomeRegion(x, z);
-      return { continent, temp, moist, magic, land, mountain, biomeRegion };
+      const cityFactor = this.getCityFactor(x, z);
+      return { continent, temp, moist, magic, land, mountain, biomeRegion, cityFactor };
     };
 
     this.water = this.#createWater();
@@ -250,6 +259,12 @@ export class ChunkManager {
       const dx = chunk.cx - cx, dz = chunk.cz - cz;
       if (Math.abs(dx) > this.renderDist || Math.abs(dz) > this.renderDist) {
         this.scene.remove(chunk.group);
+        // clean up houses
+        for (const h of chunk.houses) {
+          const idx = this.houses.indexOf(h);
+          if (idx !== -1) { this.houses.splice(idx, 1); h.cleanup(this.scene); }
+        }
+        chunk.houses.length = 0;
         this.chunkCache.set(key, chunk);
         if (this.chunkCache.size > this.cacheMaxSize) {
           const oldestKey = this.chunkCache.keys().next().value;
@@ -269,8 +284,13 @@ export class ChunkManager {
           if (this.chunkCache.has(key)) {
             chunk = this.chunkCache.get(key);
             this.chunkCache.delete(key);
+            // re-add houses from cached chunk
+            for (const h of chunk.houses) {
+              if (!this.houses.includes(h)) this.houses.push(h);
+            }
           } else {
             chunk = new Chunk(cx + dx, cz + dz, this.getHeight, this.getBiomeInfo);
+            for (const h of chunk.houses) this.houses.push(h);
           }
           this.loadedChunks.set(key, chunk);
           this.scene.add(chunk.group);
@@ -309,6 +329,7 @@ class Chunk {
     this.cx = cx;
     this.cz = cz;
     this.group = new THREE.Group();
+    this.houses = [];
     this.#generate(getHeight, getBiomeInfo);
   }
 
@@ -404,6 +425,16 @@ class Chunk {
     else if (bio.mountain > 0.4 || bio.mountain > 0.5) rockCount = 8;
     else if (tundra > 0.3) rockCount = 10;
     else rockCount = 3;
+
+    // City factor reduces vegetation
+    const cityFactor = bio.cityFactor || 0;
+    if (cityFactor > 0.1) {
+      const reduction = 1 - Math.min(0.9, cityFactor * 1.2);
+      treeCount = Math.floor(treeCount * reduction);
+      bushCount = Math.floor(bushCount * reduction);
+      rockCount = Math.floor(rockCount * reduction);
+    }
+    const isCity = cityFactor > 0.1;
 
     const maxTreeHeight = 12 + bio.mountain * 25;
 
@@ -603,6 +634,105 @@ class Chunk {
         shell.scale.setScalar(0.3 + rng() * 0.4);
         shell.rotation.y = rng() * Math.PI * 2;
         this.group.add(shell);
+      }
+    }
+
+    // Cities — dense housing, tall buildings, legendary mansion
+    if (isCity && bio.land > 0.5) {
+      const density = Math.min(1, cityFactor * 1.5);
+      const houseCount = 6 + Math.floor(rng() * 12 * density);
+      const tallCount = 1 + Math.floor(rng() * 4 * density);
+      const legendMansionRng = rng();
+      const hasLegendMansion = cityFactor > 0.5 && legendMansionRng < 0.3;
+
+      const buildingPositions = [];
+
+      // Tall buildings
+      for (let i = 0; i < tallCount; i++) {
+        const bx = ox + rng() * CHUNK_SIZE;
+        const bz = oz + rng() * CHUNK_SIZE;
+        const by = getHeight(bx, bz);
+        const floors = 3 + Math.floor(rng() * 3);
+        if (by > SEA_LEVEL + 0.3 && by < 8) {
+          const bldg = createTallBuilding(rng, floors, bx, bz, getHeight);
+          bldg.position.set(bx, by, bz);
+          bldg.scale.setScalar(0.7 + rng() * 0.4);
+          this.group.add(bldg);
+          buildingPositions.push({ x: bx, z: bz });
+        }
+      }
+
+      // Houses (dense)
+      for (let i = 0; i < houseCount; i++) {
+        const hx = ox + rng() * CHUNK_SIZE;
+        const hz = oz + rng() * CHUNK_SIZE;
+        let ok = true;
+        for (const bp of buildingPositions) {
+          const dx = bp.x - hx, dz = bp.z - hz;
+          if (dx * dx + dz * dz < 4) { ok = false; break; }
+        }
+        if (!ok) continue;
+        const hy = getHeight(hx, hz);
+        if (hy > SEA_LEVEL + 0.3 && hy < 8) {
+          const house = new House(this.cx, this.cz, hx, hz, rng, false);
+          house.group.position.y = hy;
+          this.group.add(house.group);
+          this.houses.push(house);
+          buildingPositions.push({ x: hx, z: hz });
+        }
+      }
+
+      // Legendary mansion at city center
+      if (hasLegendMansion) {
+        const mx = ox + CHUNK_SIZE * 0.3 + rng() * CHUNK_SIZE * 0.4;
+        const mz = oz + CHUNK_SIZE * 0.3 + rng() * CHUNK_SIZE * 0.4;
+        const my = getHeight(mx, mz);
+        if (my > SEA_LEVEL + 0.3 && my < 8) {
+          const legend = new House(this.cx, this.cz, mx, mz, rng, false);
+          legend.makeLegendary();
+          legend.group.position.y = my;
+          this.group.add(legend.group);
+          this.houses.push(legend);
+        }
+      }
+
+      // Dirt roads — connect buildings with thin brown strips
+      const roadMat = new THREE.MeshStandardMaterial({ color: 0x8A7A5A, roughness: 0.95 });
+      if (buildingPositions.length >= 2) {
+        const roadCount = Math.min(buildingPositions.length, 3 + Math.floor(rng() * 3));
+        for (let i = 0; i < roadCount; i++) {
+          if (buildingPositions.length < 2) break;
+          const ai = Math.floor(rng() * buildingPositions.length);
+          let bi = Math.floor(rng() * buildingPositions.length);
+          if (bi === ai) bi = (ai + 1) % buildingPositions.length;
+          const a = buildingPositions[ai];
+          const b = buildingPositions[bi];
+          const midX = (a.x + b.x) / 2;
+          const midZ = (a.z + b.z) / 2;
+          const dx = b.x - a.x;
+          const dz = b.z - a.z;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          if (dist < 1 || dist > 10) continue;
+          const road = new THREE.Mesh(new THREE.BoxGeometry(dist, 0.02, 0.35), roadMat);
+          road.position.set(midX, 0.02, midZ);
+          road.rotation.y = Math.atan2(dx, dz);
+          this.group.add(road);
+        }
+      }
+
+    // Scattered houses outside cities
+    } else if (bio.land > 0.5) {
+      const houseChance = forest > 0.3 ? 0.12 : plains > 0.2 ? 0.10 : bio.mountain > 0.4 ? 0.04 : 0.06;
+      if (rng() < houseChance) {
+        const hx = ox + rng() * CHUNK_SIZE;
+        const hz = oz + rng() * CHUNK_SIZE;
+        const hy = getHeight(hx, hz);
+        if (hy > SEA_LEVEL + 0.3 && hy < 8) {
+          const house = new House(this.cx, this.cz, hx, hz, rng, false);
+          house.group.position.y = hy;
+          this.group.add(house.group);
+          this.houses.push(house);
+        }
       }
     }
   }
@@ -1113,6 +1243,66 @@ function createSnowDrift(rng) {
     metalness: 0,
   });
   return new THREE.Mesh(geo, mat);
+}
+
+function createTallBuilding(rng, floors, posX, posZ, getHeight) {
+  const g = new THREE.Group();
+  const W = 1.5 + rng() * 1.0;
+  const D = 1.5 + rng() * 1.0;
+  const floorH = 0.8;
+  const H = floors * floorH;
+  const wallThick = 0.06;
+
+  const wallMats = [
+    new THREE.MeshStandardMaterial({ color: 0x8B7D6B, roughness: 0.9 }),
+    new THREE.MeshStandardMaterial({ color: 0x6B5D4B, roughness: 0.85 }),
+    new THREE.MeshStandardMaterial({ color: 0x7A6A5A, roughness: 0.9 }),
+    new THREE.MeshStandardMaterial({ color: 0x9A8A7A, roughness: 0.8 }),
+  ];
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x5A4A3A, roughness: 0.95 });
+  const windowMat = new THREE.MeshStandardMaterial({ color: 0x88CCFF, emissive: 0x4488AA, emissiveIntensity: 0.08 });
+
+  const y = getHeight(posX, posZ);
+  g.position.set(posX, y, posZ);
+
+  // Floors
+  for (let f = 0; f < floors; f++) {
+    const fy = f * floorH;
+    // Floor slab
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(W, 0.05, D), new THREE.MeshStandardMaterial({ color: 0x6B5D4B, roughness: 0.9 }));
+    slab.position.y = fy;
+    g.add(slab);
+
+    // Walls
+    const mat = wallMats[Math.floor(rng() * wallMats.length)];
+    for (const [wx, wz, wsx, wsz] of [[0, -D / 2, W, wallThick], [-W / 2, 0, wallThick, D], [W / 2, 0, wallThick, D]]) {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(wsx, floorH - 0.05, wsz), mat);
+      wall.position.set(wx, fy + (floorH - 0.05) / 2, wz);
+      g.add(wall);
+    }
+    // Front wall with windows
+    const frontMat = wallMats[Math.floor(rng() * wallMats.length)];
+    const leftPlank = new THREE.Mesh(new THREE.BoxGeometry(W * 0.35, floorH - 0.05, wallThick), frontMat);
+    leftPlank.position.set(-W * 0.25, fy + (floorH - 0.05) / 2, D / 2);
+    g.add(leftPlank);
+    const rightPlank = new THREE.Mesh(new THREE.BoxGeometry(W * 0.35, floorH - 0.05, wallThick), frontMat);
+    rightPlank.position.set(W * 0.25, fy + (floorH - 0.05) / 2, D / 2);
+    g.add(rightPlank);
+
+    // Windows
+    for (const side of [-1, 1]) {
+      const win = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.15, 0.02), windowMat);
+      win.position.set(side * W * 0.12, fy + floorH * 0.55, D / 2 + 0.01);
+      g.add(win);
+    }
+  }
+
+  // Roof
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.08, D + 0.2), roofMat);
+  roof.position.y = H;
+  g.add(roof);
+
+  return g;
 }
 
 function createSeashell(rng) {
