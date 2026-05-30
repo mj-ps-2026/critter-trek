@@ -279,3 +279,101 @@ canvas { display: block; }
   color: #ccc;
 }
 #crafting-menu-close:hover { background: #666; }
+
+/* ── Build palette (creative mode) ── */
+#build-palette {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7) 40%);
+  pointer-events: none;
+}
+#build-palette-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  pointer-events: auto;
+}
+.build-slot {
+  padding: 6px 10px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  background: rgba(30,30,60,0.8);
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.15s;
+  backdrop-filter: blur(4px);
+  min-width: 44px;
+  text-align: center;
+}
+.build-slot:hover {
+  background: rgba(50,50,100,0.9);
+  border-color: rgba(255,255,255,0.3);
+}
+.build-slot.selected {
+  border-color: #4a8ab5;
+  background: rgba(50,100,180,0.7);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(74,138,181,0.4);
+}
+#build-palette-hint {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* ── Mode buttons ── */
+#mode-buttons {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+.mode-btn {
+  padding: 6px 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  font-family: system-ui, sans-serif;
+}
+.mode-btn#btn-mode-survival {
+  background: rgba(40,40,60,0.7);
+  color: #aaa;
+  border-color: rgba(255,255,255,0.15);
+}
+.mode-btn#btn-mode-survival.active {
+  background: rgba(200,60,60,0.7);
+  color: #fff;
+  border-color: #e94560;
+}
+.mode-btn#btn-mode-creative {
+  background: rgba(40,40,60,0.7);
+  color: #aaa;
+  border-color: rgba(255,255,255,0.15);
+}
+.mode-btn#btn-mode-creative.active {
+  background: rgba(50,100,180,0.7);
+  color: #fff;
+  border-color: #4a8ab5;
+}
+.mode-btn:hover {
+  filter: brightness(1.2);
+}

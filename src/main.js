@@ -30,6 +30,7 @@ console.log('[main.js] FaunaManager imported');
 import { ItemManager, ITEM_DEFS, CRAFTING_RECIPES } from './items.js';
 console.log('[main.js] ItemManager imported');
 
+import { BuildingManager } from './building.js';
 import './style.css';
 console.log('[main.js] style.css imported');
 
@@ -45,6 +46,7 @@ if (_overlay) _overlay.style.display = 'none';
 
 const EXPLORE = 0, COMBAT = 1, GAME_OVER = 2;
 let gameState = EXPLORE;
+let gameMode = 'survival'; // 'survival' | 'creative'
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 300);
@@ -121,6 +123,8 @@ const underwaterFog = new THREE.FogExp2(0x1a6a9a, 0.008);
 console.log('[main.js] Step: fauna / items');
 const fauna = new FaunaManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
 const itemManager = new ItemManager(scene, chunkManager.getHeight, chunkManager.getBiomeInfo);
+const buildingManager = new BuildingManager(scene);
+const BUILD_SAVE_KEY = 'crittertrek_build';
 
 console.log('[main.js] Step: animal creation and spawn');
 const animal = new Animal();
@@ -131,6 +135,8 @@ if (saved) {
   foxCurrentHP = saved.foxCurrentHP;
   itemManager.inventory = { ...saved.inventory };
   if (saved.dayTime != null) dayTime = saved.dayTime;
+  const buildData = loadBuildData();
+  if (buildData) buildingManager.loadSaveData(buildData);
 } else {
   const spawn = findSpawn(chunkManager.getHeight);
   animal.group.position.set(spawn.x, spawn.y, spawn.z);
@@ -195,6 +201,21 @@ document.getElementById('crafting-menu-close').addEventListener('click', () => {
   craftingMenu.style.display = 'none';
 });
 
+const modeSurvivalBtn = document.getElementById('btn-mode-survival');
+const modeCreativeBtn = document.getElementById('btn-mode-creative');
+
+function setMode(mode) {
+  gameMode = mode;
+  modeSurvivalBtn.classList.toggle('active', mode === 'survival');
+  modeCreativeBtn.classList.toggle('active', mode === 'creative');
+  const palette = document.getElementById('build-palette');
+  palette.style.display = mode === 'creative' ? 'flex' : 'none';
+  if (mode === 'creative') rebuildBuildPalette();
+}
+
+modeSurvivalBtn.addEventListener('click', () => setMode('survival'));
+modeCreativeBtn.addEventListener('click', () => setMode('creative'));
+
 function rebuildCraftingList() {
   craftingRecipesEl.innerHTML = '';
   for (const recipe of CRAFTING_RECIPES) {
@@ -212,6 +233,39 @@ function rebuildCraftingList() {
     }
     craftingRecipesEl.appendChild(btn);
   }
+}
+
+function rebuildBuildPalette() {
+  const container = document.getElementById('build-palette-items');
+  container.innerHTML = '';
+  const counts = itemManager.getCounts();
+  const allTypes = Object.keys(ITEM_DEFS);
+  let firstWithStock = null;
+  for (const type of allTypes) {
+    const hasIt = gameMode === 'creative' || (counts[type] || 0) > 0;
+    if (!hasIt) continue;
+    if (!firstWithStock) firstWithStock = type;
+    const info = ITEM_DEFS[type];
+    const btn = document.createElement('button');
+    btn.className = 'build-slot' + (buildingManager.selectedType === type ? ' selected' : '');
+    const label = gameMode === 'creative' ? info.icon : `${info.icon} ${counts[type] || 0}`;
+    btn.innerHTML = label;
+    btn.title = info.name;
+    btn.addEventListener('click', () => {
+      buildingManager.selectedType = type;
+      rebuildBuildPalette();
+    });
+    container.appendChild(btn);
+  }
+  if (!buildingManager.selectedType && firstWithStock) {
+    buildingManager.selectedType = firstWithStock;
+  }
+  const selected = buildingManager.selectedType;
+  document.getElementById('build-palette-hint').innerHTML = selected
+    ? `${ITEM_DEFS[selected].icon} ${ITEM_DEFS[selected].name} selected · <b>E</b> place · <b>Q</b> pickup · Sword rotate · Pickaxe remove · Trident move`
+    : gameMode === 'creative'
+      ? 'Creative mode — select an item above and press <b>E</b> to place it!'
+      : 'No items to build with — collect materials in Survival mode first!';
 }
 
 // Use Clock despite deprecation warning - Timer needs extra update() calls
@@ -286,6 +340,21 @@ function deleteSave() {
   localStorage.removeItem(SAVE_KEY);
 }
 
+function saveBuildData() {
+  try {
+    localStorage.setItem(BUILD_SAVE_KEY, JSON.stringify(buildingManager.getSaveData()));
+  } catch (e) {
+    console.warn('Build save failed:', e);
+  }
+}
+
+function loadBuildData() {
+  try {
+    const raw = localStorage.getItem(BUILD_SAVE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
 function addXP(amount) {
   foxXP += amount;
   while (foxXP >= xpForLevel(foxLevel)) {
@@ -303,12 +372,52 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyR' && gameState === EXPLORE) {
     biomeMenu.style.display = biomeMenu.style.display === 'none' ? 'flex' : 'none';
   }
+  if (e.code === 'KeyM' && gameState === EXPLORE) {
+    setMode(gameMode === 'survival' ? 'creative' : 'survival');
+  }
   if (e.code === 'KeyC' && gameState === EXPLORE) {
     if (craftingMenu.style.display === 'none') {
       rebuildCraftingList();
       craftingMenu.style.display = 'flex';
     } else {
       craftingMenu.style.display = 'none';
+    }
+  }
+  if (e.code === 'KeyE' && gameState === EXPLORE && gameMode === 'creative' && buildingManager.selectedType) {
+    const toolItems = ['animalsword', 'animalpickaxe', 'animaltrident'];
+    if (toolItems.includes(buildingManager.selectedType)) {
+      const result = buildingManager.interactWith(animal.group.position, buildingManager.selectedType);
+      if (result === 'rotated') {
+        infoEl.textContent = '🗡️ Sword rotated object!';
+        infoEl.style.background = 'rgba(100,180,255,0.7)';
+        setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1000);
+      } else if (typeof result === 'string' && result !== 'moved') {
+        itemManager.inventory[result] = (itemManager.inventory[result] || 0) + 1;
+        saveBuildData();
+        rebuildBuildPalette();
+        infoEl.textContent = `⛏️ Pickaxe removed ${ITEM_DEFS[result].icon}!`;
+        infoEl.style.background = 'rgba(255,180,50,0.7)';
+        setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1000);
+      } else if (result === 'moved') {
+        infoEl.textContent = '🔱 Trident moved object!';
+        infoEl.style.background = 'rgba(100,180,255,0.7)';
+        setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1000);
+      }
+    } else {
+      const pos = animal.group.position;
+      const y = chunkManager.getHeight(pos.x, pos.z);
+      if (buildingManager.place(buildingManager.selectedType, y, animal.group)) {
+        saveBuildData();
+        rebuildBuildPalette();
+      }
+    }
+  }
+  if (e.code === 'KeyQ' && gameState === EXPLORE && gameMode === 'creative') {
+    const picked = buildingManager.pickupAt(animal.group.position);
+    if (picked) {
+      itemManager.inventory[picked] = (itemManager.inventory[picked] || 0) + 1;
+      saveBuildData();
+      rebuildBuildPalette();
     }
   }
 });
@@ -686,7 +795,7 @@ function animate() {
 
       for (const wolf of wolves) {
         const result = wolf.update(dt, pos, dayFactor > 0.3);
-        if (result === 'attacking') {
+        if (result === 'attacking' && gameMode === 'survival') {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
           craftingMenu.style.display = 'none';
@@ -705,7 +814,7 @@ function animate() {
       }
 
       for (const faunaAnimal of fauna.animals) {
-        if (faunaAnimal.group.position.distanceTo(pos) < 0.8) {
+        if (faunaAnimal.group.position.distanceTo(pos) < 0.8 && gameMode === 'survival') {
           gameState = COMBAT;
           biomeMenu.style.display = 'none';
           craftingMenu.style.display = 'none';
@@ -724,6 +833,9 @@ function animate() {
       }
 
       foxCurrentHP = Math.min(getMaxHP(foxLevel), foxCurrentHP + REGEN_HP_PER_SEC * dt);
+
+      buildingManager.update(animal.group.position);
+      if (frameCount % 300 === 0 && buildingManager.objects.length > 0) saveBuildData();
 
       if (drinkCooldown > 0) drinkCooldown -= dt;
       if (controls.divePressed) {
@@ -768,6 +880,8 @@ function animate() {
 
       drinkBtn.style.display = gameState === EXPLORE && controls.isSwimming && drinkCooldown <= 0 && !controls.isDiving ? 'block' : 'none';
       diveBtn.style.display = gameState === EXPLORE && controls.isSwimming ? 'block' : 'none';
+      const modeBtns = document.getElementById('mode-buttons');
+      if (modeBtns) modeBtns.style.display = gameState === EXPLORE ? 'flex' : 'none';
       diveBtn.textContent = controls.isDiving ? '⬆ Surface (Q)' : '🌊 Dive (Q)';
       diveBtn.className = controls.isDiving ? 'diving' : '';
 
@@ -777,6 +891,30 @@ function animate() {
       if (controls.superMode) {
         infoEl.textContent = 'SUPER MODE — WASD to fly · Space/Shift up/down · F to toggle';
         infoEl.style.background = 'rgba(200,50,50,0.7)';
+      } else if (gameMode === 'creative') {
+        const cnt = itemManager.getCounts();
+        let totalCollected = 0;
+        let items = '';
+        if (cnt.stick) { items += ` 🪵${cnt.stick}`; totalCollected += cnt.stick; }
+        if (cnt.rock) { items += ` 🪨${cnt.rock}`; totalCollected += cnt.rock; }
+        if (cnt.sharpstick) { items += ` 🗡️${cnt.sharpstick}`; totalCollected += cnt.sharpstick; }
+        if (cnt.cactusneedle) { items += ` 🌵${cnt.cactusneedle}`; totalCollected += cnt.cactusneedle; }
+        if (cnt.berry) { items += ` 🫐${cnt.berry}`; totalCollected += cnt.berry; }
+        if (cnt.bone) { items += ` 🦴${cnt.bone}`; totalCollected += cnt.bone; }
+        if (cnt.feather) { items += ` 🪶${cnt.feather}`; totalCollected += cnt.feather; }
+        if (cnt.seaweed) { items += ` 🌱${cnt.seaweed}`; totalCollected += cnt.seaweed; }
+        if (cnt.jellyfisharm) { items += ` 🪼${cnt.jellyfisharm}`; totalCollected += cnt.jellyfisharm; }
+        if (cnt.starfisharm) { items += ` ⭐${cnt.starfisharm}`; totalCollected += cnt.starfisharm; }
+        if (cnt.animalsword) { items += ` ⚔️${cnt.animalsword}`; totalCollected += cnt.animalsword; }
+        if (cnt.animalpickaxe) { items += ` ⛏️${cnt.animalpickaxe}`; totalCollected += cnt.animalpickaxe; }
+        if (cnt.animaltrident) { items += ` 🔱${cnt.animaltrident}`; totalCollected += cnt.animaltrident; }
+        if (cnt.mushroom) { items += ` 🍄${cnt.mushroom}`; totalCollected += cnt.mushroom; }
+        if (cnt.herb) { items += ` 🌿${cnt.herb}`; totalCollected += cnt.herb; }
+        const placedCount = buildingManager.objects.length;
+        const buildInfo = placedCount > 0 ? ` 🏗️${placedCount} built` : '';
+        const collectInfo = totalCollected > 0 ? ` 📦${totalCollected} collected` : '';
+        infoEl.textContent = `🎨 CREATIVE${buildInfo}${collectInfo} · WASD move · E place · Q pickup` + items;
+        infoEl.style.background = 'rgba(30,60,120,0.6)';
       } else {
         const cnt = itemManager.getCounts();
         let items = '';
@@ -786,21 +924,21 @@ function animate() {
         if (cnt.sharpstick) items += ` 🗡️${cnt.sharpstick}`;
         if (cnt.cactusneedle) items += ` 🌵${cnt.cactusneedle}`;
         if (cnt.berry) items += ` 🫐${cnt.berry}`;
-if (cnt.bone) items += ` 🦴${cnt.bone}`;
-if (cnt.feather) items += ` 🪶${cnt.feather}`;
-if (cnt.seaweed) items += ` 🌱${cnt.seaweed}`;
-if (cnt.jellyfisharm) items += ` 🪼${cnt.jellyfisharm}`;
-if (cnt.starfisharm) items += ` ⭐${cnt.starfisharm}`;
-if (cnt.animalsword) items += ` ⚔️${cnt.animalsword}`;
-if (cnt.animalpickaxe) items += ` ⛏️${cnt.animalpickaxe}`;
-if (cnt.animaltrident) items += ` 🔱${cnt.animaltrident}`;
-if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
+        if (cnt.bone) items += ` 🦴${cnt.bone}`;
+        if (cnt.feather) items += ` 🪶${cnt.feather}`;
+        if (cnt.seaweed) items += ` 🌱${cnt.seaweed}`;
+        if (cnt.jellyfisharm) items += ` 🪼${cnt.jellyfisharm}`;
+        if (cnt.starfisharm) items += ` ⭐${cnt.starfisharm}`;
+        if (cnt.animalsword) items += ` ⚔️${cnt.animalsword}`;
+        if (cnt.animalpickaxe) items += ` ⛏️${cnt.animalpickaxe}`;
+        if (cnt.animaltrident) items += ` 🔱${cnt.animaltrident}`;
+        if (cnt.mushroom) items += ` 🍄${cnt.mushroom}`;
         if (cnt.herb) items += ` 🌿${cnt.herb}`;
         const maxHP = getMaxHP(foxLevel);
         const nextXP = xpForLevel(foxLevel);
         const bioInfo = chunkManager.getBiomeInfo(pos.x, pos.z);
         const biomeName = getBiomeName(bioInfo, pos.y);
-        infoEl.textContent = `${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP}${controls.keys.sprint ? ' ⚡SPRINT' : ''} · WASD · Shift sprint · A/D turn · F super` + items;
+        infoEl.textContent = `⚔️ SURVIVAL · ${biomeName} · Lv${foxLevel} ❤️${Math.ceil(foxCurrentHP)}/${maxHP} ⭐${foxXP}/${nextXP}${controls.keys.sprint ? ' ⚡SPRINT' : ''}` + items;
         infoEl.style.background = 'rgba(0,0,0,0.5)';
       }
       break;
