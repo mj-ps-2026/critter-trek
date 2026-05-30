@@ -420,6 +420,14 @@ window.addEventListener('keydown', e => {
       rebuildBuildPalette();
     }
   }
+  if (e.code === 'KeyG' && gameState === EXPLORE && gameMode === 'creative') {
+    const spawned = fauna.spawnAnimalAt(animal.group.position);
+    if (spawned) {
+      infoEl.textContent = '🐾 Spawned an animal!';
+      infoEl.style.background = 'rgba(100,200,100,0.7)';
+      setTimeout(() => infoEl.style.background = 'rgba(0,0,0,0.5)', 1000);
+    }
+  }
 });
 window.addEventListener('keyup', e => keys[e.code] = false);
 

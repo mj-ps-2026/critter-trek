@@ -78,40 +78,40 @@ class FaunaAnimal {
     const g = this.group;
     const white = 0xE8E0D0, pink = 0xFFB5B5, black = 0x111111;
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 6, 6), mat(white));
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), mat(white));
     body.position.y = 0.3;
     g.add(body);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), mat(white));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), mat(white));
     head.position.set(0, 0.45, -0.3);
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.35, 4), mat(white));
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.35, 8), mat(white));
       ear.position.set(s * 0.12, 0.72, -0.24);
       ear.rotation.z = s * 0.25;
       g.add(ear);
-      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.2, 4), mat(pink));
+      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.2, 8), mat(pink));
       inner.position.set(s * 0.12, 0.66, -0.24);
       inner.rotation.z = s * 0.25;
       g.add(inner);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.1, 0.48, -0.39);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 12, 12), mat(black));
       pupil.position.set(s * 0.1, 0.48, -0.41);
       g.add(pupil);
     }
 
-    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 4), mat(white));
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), mat(white));
     tail.position.set(0, 0.25, 0.3);
     g.add(tail);
 
     for (const [x, z] of [[0.12, 0.15], [-0.12, 0.15], [0.12, -0.15], [-0.12, -0.15]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.18, 4), mat(white));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.18, 8), mat(white));
       leg.position.set(x, 0.09, z);
       g.add(leg);
     }
@@ -136,32 +136,32 @@ class FaunaAnimal {
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.35, 4), mat(dark));
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.35, 8), mat(dark));
       ant.position.set(s * 0.18, 1.35, -0.7);
       ant.rotation.z = s * 0.4;
       g.add(ant);
-      const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.18, 4), mat(dark));
+      const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.18, 8), mat(dark));
       tip.position.set(s * 0.3, 1.5, -0.6);
       tip.rotation.z = s * 0.7;
       g.add(tip);
     }
 
     for (const [x, z] of [[0.3, 0.45], [-0.3, 0.45], [0.3, -0.45], [-0.3, -0.45]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.5, 4), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.5, 8), mat(dark));
       leg.position.set(x, 0.25, z);
       g.add(leg);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.1, 1.15, -1.05);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 12, 12), mat(0x111111));
       pupil.position.set(s * 0.1, 1.15, -1.07);
       g.add(pupil);
     }
 
-    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 4, 4), mat(white));
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), mat(white));
     tail.position.set(0, 0.75, 0.7);
     g.add(tail);
   }
@@ -178,22 +178,22 @@ class FaunaAnimal {
     head.position.set(0, 0.1, -0.3);
     g.add(head);
 
-    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 4), mat(dark));
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 8), mat(dark));
     tail.position.set(0, 0.04, 0.32);
     tail.rotation.x = 0.3;
     g.add(tail);
 
     for (const [x, z] of [[0.06, 0.14], [-0.06, 0.14], [0.06, -0.14], [-0.06, -0.14]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.02, 0.06, 4), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.02, 0.06, 8), mat(dark));
       leg.position.set(x, -0.02, z);
       g.add(leg);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(yellow));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 12), mat(yellow));
       white.position.set(s * 0.04, 0.12, -0.34);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 12), mat(0x111111));
       pupil.position.set(s * 0.04, 0.12, -0.36);
       g.add(pupil);
     }
@@ -218,22 +218,22 @@ class FaunaAnimal {
     g.add(snout);
 
     for (const s of [-1, 1]) {
-      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.075, 5, 5), mat(brown));
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 10), mat(brown));
       ear.position.set(s * 0.2, 1.3, -0.85);
       g.add(ear);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.12, 1.15, -1.08);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), mat(0x111111));
       pupil.position.set(s * 0.12, 1.15, -1.1);
       g.add(pupil);
     }
 
     for (const [x, z] of [[0.45, 0.6], [-0.45, 0.6], [0.45, -0.6], [-0.45, -0.6]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.5, 5), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.5, 8), mat(dark));
       leg.position.set(x, 0.25, z);
       g.add(leg);
     }
@@ -253,32 +253,32 @@ class FaunaAnimal {
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.18, 4), mat(white));
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.18, 8), mat(white));
       ear.position.set(s * 0.1, 0.6, -0.36);
       ear.rotation.z = s * 0.2;
       g.add(ear);
-      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 4), mat(dark));
+      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 8), mat(dark));
       inner.position.set(s * 0.1, 0.56, -0.36);
       inner.rotation.z = s * 0.2;
       g.add(inner);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.075, 0.46, -0.5);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 12, 12), mat(black));
       pupil.position.set(s * 0.075, 0.46, -0.52);
       g.add(pupil);
     }
 
     for (const [x, z] of [[0.12, 0.25], [-0.12, 0.25], [0.12, -0.25], [-0.12, -0.25]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.2, 4), mat(white));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.2, 8), mat(white));
       leg.position.set(x, 0.1, z);
       g.add(leg);
     }
 
-    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.12, 5, 5), mat(white));
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), mat(white));
     tail.position.set(0, 0.3, 0.4);
     tail.scale.set(1, 0.9, 1.5);
     g.add(tail);
@@ -288,34 +288,34 @@ class FaunaAnimal {
     const g = this.group;
     const green = 0x4CAF50, light = 0x81C784, dark = 0x2E7D32, black = 0x111111;
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 6), mat(green));
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat(green));
     body.scale.set(1, 0.6, 1.4);
     body.position.y = 0.12;
     g.add(body);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), mat(green));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), mat(green));
     head.position.set(0, 0.18, -0.28);
     head.scale.set(1, 0.7, 0.8);
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), mat(green));
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), mat(green));
       eye.position.set(s * 0.1, 0.28, -0.3);
       g.add(eye);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 12), mat(black));
       pupil.position.set(s * 0.1, 0.29, -0.33);
       g.add(pupil);
     }
 
     for (const s of [-1, 1]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.055, 0.15, 4), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.055, 0.15, 8), mat(dark));
       leg.position.set(s * 0.15, 0.02, 0.14);
       leg.rotation.x = 0.5;
       g.add(leg);
     }
 
     for (const s of [-1, 1]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 4), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 8), mat(dark));
       leg.position.set(s * 0.09, 0.02, -0.14);
       g.add(leg);
     }
@@ -332,12 +332,12 @@ class FaunaAnimal {
       metalness: 0.2,
     });
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 5), bodyMat);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), bodyMat);
     body.position.y = 0.08;
     g.add(body);
 
     for (const s of [-1, 1]) {
-      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.06, 4), new THREE.MeshStandardMaterial({
+      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.06, 8), new THREE.MeshStandardMaterial({
         color: new THREE.Color().setHSL(hue, 0.3, 0.6),
         transparent: true, opacity: 0.5,
       }));
@@ -346,7 +346,7 @@ class FaunaAnimal {
       g.add(wing);
     }
 
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 5), new THREE.MeshStandardMaterial({
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), new THREE.MeshStandardMaterial({
       color: new THREE.Color().setHSL(hue, 0.8, 0.6),
       emissive: new THREE.Color().setHSL(hue, 0.8, 0.4),
       emissiveIntensity: 0.8,
@@ -355,10 +355,10 @@ class FaunaAnimal {
     g.add(glow);
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), mat(0xFFFFFF));
       white.position.set(s * 0.02, 0.09, -0.07);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.007, 4, 4), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 8), mat(0x111111));
       pupil.position.set(s * 0.02, 0.09, -0.075);
       g.add(pupil);
     }
@@ -381,13 +381,13 @@ class FaunaAnimal {
     head.position.set(0, 0.72, -0.55);
     g.add(head);
 
-    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 4), mat(dark));
+    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 8), mat(dark));
     beard.position.set(0, 0.58, -0.65);
     beard.rotation.x = 0.3;
     g.add(beard);
 
     for (const s of [-1, 1]) {
-      const horn = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.045, 0.3, 4), mat(horn));
+      const horn = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.045, 0.3, 8), mat(horn));
       horn.position.set(s * 0.1, 0.88, -0.48);
       horn.rotation.z = s * 0.3;
       horn.rotation.x = -0.4;
@@ -395,21 +395,21 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.07, 0.76, -0.65);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 12, 12), mat(black));
       pupil.position.set(s * 0.07, 0.76, -0.67);
       g.add(pupil);
     }
 
     for (const [x, z] of [[0.2, 0.3], [-0.2, 0.3], [0.2, -0.3], [-0.2, -0.3]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.3, 4), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.3, 8), mat(dark));
       leg.position.set(x, 0.15, z);
       g.add(leg);
     }
 
-    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), mat(fur));
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), mat(fur));
     tail.position.set(0, 0.5, 0.5);
     g.add(tail);
   }
@@ -418,22 +418,22 @@ class FaunaAnimal {
     const g = this.group;
     const tan = 0xC4A46A, pattern = 0x8B6B3A, dark = 0x5A3A1A, black = 0x111111;
 
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.06, 0.5, 5), mat(tan));
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.06, 0.5, 8), mat(tan));
     body.position.y = 0.03;
     body.rotation.x = 0.2;
     g.add(body);
 
-    const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.3, 5), mat(pattern));
+    const mid = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.3, 8), mat(pattern));
     mid.position.set(0, 0.02, 0.35);
     mid.rotation.x = -0.1;
     g.add(mid);
 
-    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.15, 5), mat(pattern));
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.15, 8), mat(pattern));
     tail.position.set(0, 0.02, 0.52);
     tail.rotation.x = 0.3;
     g.add(tail);
 
-    const rattle = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.04, 4), mat(dark));
+    const rattle = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.04, 8), mat(dark));
     rattle.position.set(0, 0.04, 0.6);
     g.add(rattle);
 
@@ -442,10 +442,10 @@ class FaunaAnimal {
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), mat(0xFFFFFF));
       white.position.set(s * 0.025, 0.05, -0.29);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 4, 4), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 8), mat(black));
       pupil.position.set(s * 0.025, 0.05, -0.3);
       g.add(pupil);
     }
@@ -455,43 +455,43 @@ class FaunaAnimal {
     const g = this.group;
     const brown = 0x6A4A2A, light = 0xC8B08A, dark = 0x3A2A1A, yellow = 0xDDCC44, black = 0x111111;
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 6), mat(brown));
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat(brown));
     body.scale.set(1, 0.85, 0.9);
     body.position.y = 0.35;
     g.add(body);
 
-    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.14, 5, 5), mat(light));
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), mat(light));
     belly.scale.set(0.8, 0.7, 0.5);
     belly.position.set(0, 0.3, -0.12);
     g.add(belly);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), mat(brown));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), mat(brown));
     head.position.set(0, 0.55, -0.15);
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 4), mat(dark));
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 8), mat(dark));
       ear.position.set(s * 0.07, 0.66, -0.15);
       ear.rotation.z = s * 0.3;
       g.add(ear);
     }
 
     for (const s of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), mat(yellow));
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 12), mat(yellow));
       eye.position.set(s * 0.06, 0.56, -0.24);
       g.add(eye);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 12), mat(black));
       pupil.position.set(s * 0.06, 0.56, -0.26);
       g.add(pupil);
     }
 
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.06, 4), mat(yellow));
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.06, 8), mat(yellow));
     beak.position.set(0, 0.53, -0.28);
     beak.rotation.x = 0.3;
     g.add(beak);
 
     for (const s of [-1, 1]) {
-      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.08, 4), mat(dark));
+      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.08, 8), mat(dark));
       wing.position.set(s * 0.22, 0.32, 0);
       wing.rotation.z = s * 0.6;
       g.add(wing);
@@ -517,33 +517,33 @@ class FaunaAnimal {
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 4), mat(black));
+      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 8), mat(black));
       horn.position.set(s * 0.15, 0.85, -0.95);
       horn.rotation.z = s * 0.4;
       g.add(horn);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.12, 0.78, -1.15);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 12), mat(0x111111));
       pupil.position.set(s * 0.12, 0.78, -1.17);
       g.add(pupil);
     }
 
     for (const [x, z] of [[0.4, 0.6], [-0.4, 0.6], [0.4, -0.6], [-0.4, -0.6]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.45, 5), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.45, 8), mat(dark));
       leg.position.set(x, 0.22, z);
       g.add(leg);
     }
 
-    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.25, 4), mat(dark));
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.25, 8), mat(dark));
     tail.position.set(0, 0.6, 0.85);
     tail.rotation.x = 0.4;
     g.add(tail);
 
-    const tuft = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), mat(dark));
+    const tuft = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), mat(dark));
     tuft.position.set(0, 0.65, 0.95);
     g.add(tuft);
   }
@@ -552,41 +552,41 @@ class FaunaAnimal {
     const g = this.group;
     const white = 0xE8E0D0, dark = 0x4A3A2A, orange = 0xDD6622, black = 0x111111;
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), mat(white));
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), mat(white));
     body.scale.set(1, 0.8, 1.3);
     body.position.y = 0.5;
     g.add(body);
 
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.35, 5), mat(white));
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.35, 8), mat(white));
     neck.position.set(0, 0.75, -0.2);
     g.add(neck);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 5), mat(white));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), mat(white));
     head.position.set(0, 0.95, -0.3);
     g.add(head);
 
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.15, 4), mat(orange));
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.15, 8), mat(orange));
     beak.position.set(0, 0.94, -0.4);
     beak.rotation.x = 0.2;
     g.add(beak);
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), mat(0xFFFFFF));
       white.position.set(s * 0.025, 0.96, -0.32);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 4, 4), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 8), mat(black));
       pupil.position.set(s * 0.025, 0.96, -0.33);
       g.add(pupil);
     }
 
     for (const [x, z] of [[0.06, 0.22], [-0.06, 0.22]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.4, 4), mat(orange));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.4, 8), mat(orange));
       leg.position.set(x, 0.2, z);
       g.add(leg);
     }
 
     for (const s of [-1, 1]) {
-      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.06, 4), mat(0xC8C0B0));
+      const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.06, 8), mat(0xC8C0B0));
       wing.position.set(s * 0.18, 0.5, 0);
       wing.rotation.z = s * 0.5;
       g.add(wing);
@@ -597,42 +597,42 @@ class FaunaAnimal {
     const g = this.group;
     const tan = 0xC4A46A, light = 0xE8D8B8, dark = 0x8A6A3A, black = 0x111111;
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 6), mat(tan));
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), mat(tan));
     body.scale.set(1.2, 0.9, 1.1);
     body.position.y = 0.25;
     g.add(body);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), mat(tan));
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), mat(tan));
     head.position.set(0, 0.38, -0.28);
     g.add(head);
 
     for (const s of [-1, 1]) {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.3, 4), mat(tan));
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.3, 8), mat(tan));
       ear.position.set(s * 0.08, 0.6, -0.22);
       ear.rotation.z = s * 0.2;
       g.add(ear);
-      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 4), mat(light));
+      const inner = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 8), mat(light));
       inner.position.set(s * 0.08, 0.55, -0.22);
       inner.rotation.z = s * 0.2;
       g.add(inner);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 12), mat(0xFFFFFF));
       white.position.set(s * 0.07, 0.4, -0.34);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), mat(black));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 12, 12), mat(black));
       pupil.position.set(s * 0.07, 0.4, -0.36);
       g.add(pupil);
     }
 
     for (const [x, z] of [[0.1, 0.12], [-0.1, 0.12], [0.14, -0.12], [-0.14, -0.12]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.18, 4), mat(dark));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.18, 8), mat(dark));
       leg.position.set(x, 0.09, z);
       g.add(leg);
     }
 
-    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), mat(light));
+    const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), mat(light));
     tail.position.set(0, 0.22, 0.28);
     g.add(tail);
   }
@@ -653,27 +653,27 @@ class FaunaAnimal {
       roughness: 0.6,
     });
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 7), bodyMat);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), bodyMat);
     body.scale.set(1, 0.3, 0.5);
     g.add(body);
 
-    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 4), finMat);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 8), finMat);
     tail.position.set(0, 0, 0.16);
     tail.rotation.x = 0.2;
     g.add(tail);
 
     for (const s of [-1, 1]) {
-      const fin = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 3), finMat);
+      const fin = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 8), finMat);
       fin.position.set(s * 0.12, 0, 0);
       fin.rotation.z = s * 0.3;
       g.add(fin);
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.02, 4, 4), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), mat(0xFFFFFF));
       white.position.set(s * 0.06, 0.02, -0.14);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 4, 4), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), mat(0x111111));
       pupil.position.set(s * 0.06, 0.02, -0.15);
       g.add(pupil);
     }
@@ -683,22 +683,22 @@ class FaunaAnimal {
     const g = this.group;
     const shell = 0x5a7a3a, skin = 0x7a9a5a, dark = 0x3a4a2a;
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), mat(skin));
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), mat(skin));
     body.scale.set(1.1, 0.4, 0.8);
     g.add(body);
 
-    const shellMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), mat(shell));
+    const shellMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), mat(shell));
     shellMesh.scale.set(1, 0.35, 0.8);
     shellMesh.position.y = 0.04;
     g.add(shellMesh);
 
     for (const s of [-1, 1]) {
-      const flipper = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.18, 4), mat(dark));
+      const flipper = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.18, 8), mat(dark));
       flipper.position.set(s * 0.12, -0.03, 0.12);
       flipper.rotation.z = s * 0.4;
       flipper.rotation.x = -0.3;
       g.add(flipper);
-      const front = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.18, 4), mat(dark));
+      const front = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.18, 8), mat(dark));
       front.position.set(s * 0.12, -0.03, -0.12);
       front.rotation.z = s * 0.4;
       front.rotation.x = 0.3;
@@ -706,10 +706,10 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 4), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), mat(0xFFFFFF));
       white.position.set(s * 0.06, 0, -0.18);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 4, 4), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), mat(0x111111));
       pupil.position.set(s * 0.06, 0, -0.19);
       g.add(pupil);
     }
@@ -726,13 +726,13 @@ class FaunaAnimal {
       metalness: 0.1,
     });
 
-    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), bodyMat);
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), bodyMat);
     bell.scale.set(1, 0.5, 1);
     g.add(bell);
 
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      const tentacle = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.008, 0.2, 3), bodyMat);
+      const tentacle = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.008, 0.2, 8), bodyMat);
       tentacle.position.set(Math.cos(a) * 0.06, -0.1, Math.sin(a) * 0.06);
       tentacle.rotation.x = Math.cos(a) * 0.2;
       tentacle.rotation.z = Math.sin(a) * 0.2;
@@ -740,10 +740,10 @@ class FaunaAnimal {
     }
 
     for (const s of [-1, 1]) {
-      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 5), mat(0xFFFFFF));
+      const white = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), mat(0xFFFFFF));
       white.position.set(s * 0.04, 0.04, -0.1);
       g.add(white);
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 5), mat(0x111111));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 10, 10), mat(0x111111));
       pupil.position.set(s * 0.04, 0.04, -0.11);
       g.add(pupil);
     }
@@ -929,5 +929,22 @@ export class FaunaManager {
   clearAll() {
     for (const a of this.animals) a.removeFrom(this.scene);
     this.animals = [];
+  }
+
+  spawnAnimalAt(pos) {
+    const bio = this.getBiomeInfo(pos.x, pos.z);
+    const type = this.#pickType(bio);
+    if (!type) return false;
+    const y = this.getHeight(pos.x, pos.z);
+    const spawnPos = new THREE.Vector3(
+      pos.x + (Math.random() - 0.5) * 4,
+      y > 0.3 ? y : -0.3,
+      pos.z + (Math.random() - 0.5) * 4
+    );
+    const animal = new FaunaAnimal(type, spawnPos, this.getHeight);
+    if (spawnPos.y < 0.3) animal.waterCreature = true;
+    this.scene.add(animal.group);
+    this.animals.push(animal);
+    return true;
   }
 }
